@@ -1,0 +1,2328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>관리자 페이지 — 지웰홈스 라이프 강동</title>
+<!-- 데이터 파일: 이미지·색상·신청내역을 보관 -->
+<script src="gwell-data.js"></script>
+<!-- Firebase 통합 모듈 -->
+<script type="module" src="gwell-firebase.js"></script>
+<style>
+@font-face{font-family:'Pretendard';src:url('fonts/Pretendard-Regular.woff2') format('woff2'),url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/Pretendard-Regular.woff2') format('woff2');font-weight:400;font-display:swap;}
+@font-face{font-family:'Pretendard';src:url('fonts/Pretendard-Medium.woff2') format('woff2'),url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/Pretendard-Medium.woff2') format('woff2');font-weight:500;font-display:swap;}
+@font-face{font-family:'Pretendard';src:url('fonts/Pretendard-SemiBold.woff2') format('woff2'),url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/Pretendard-SemiBold.woff2') format('woff2');font-weight:600;font-display:swap;}
+@font-face{font-family:'Pretendard';src:url('fonts/Pretendard-Bold.woff2') format('woff2'),url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/Pretendard-Bold.woff2') format('woff2');font-weight:700;font-display:swap;}
+@font-face{font-family:'Pretendard';src:url('fonts/Pretendard-ExtraBold.woff2') format('woff2'),url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/Pretendard-ExtraBold.woff2') format('woff2');font-weight:800;font-display:swap;}
+
+:root{
+  --brand:#1B2B4A;--brand-hover:#0F1D33;--brand-light:#EEF1F7;
+  --green:#22C55E;--green-light:#F0FDF4;--red:#EF4444;--red-light:#FEF2F2;
+  --yellow:#F59E0B;--yellow-light:#FFFBEB;
+  --navy:#1A1A1A;--gray-50:#F8F8F8;--gray-100:#F2F2F2;
+  --gray-200:#E8E8E8;--gray-400:#AAAAAA;--gray-600:#666;
+  --white:#fff;--border:#E8E8E8;
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--shadow:0 2px 12px rgba(0,0,0,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',sans-serif;background:var(--gray-50);color:var(--navy);min-height:100vh;-webkit-font-smoothing:antialiased;}
+button,input,select,textarea{font-family:inherit;}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--brand);outline-offset:2px;}
+
+/* LOGIN GATE */
+.login-gate{position:fixed;inset:0;background:linear-gradient(135deg,var(--brand) 0%,var(--brand-hover) 100%);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-card{background:white;border-radius:var(--r-lg);max-width:380px;width:100%;padding:36px 32px;box-shadow:0 20px 60px rgba(0,0,0,0.25);}
+.login-logo{width:48px;height:48px;background:var(--brand);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
+.login-logo svg{width:24px;height:24px;fill:white;}
+.login-title{font-size:20px;font-weight:800;color:var(--navy);margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--gray-600);margin-bottom:24px;}
+.login-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:14px;outline:none;margin-bottom:12px;}
+.login-input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(27,43,74,0.1);}
+.login-btn{width:100%;padding:13px;background:var(--brand);color:white;border:none;border-radius:var(--r-sm);font-size:15px;font-weight:700;cursor:pointer;transition:background 0.15s;}
+.login-btn:hover{background:var(--brand-hover);}
+.login-err{font-size:12px;color:var(--red);margin-top:8px;display:none;}
+.login-err.show{display:block;}
+.login-hint{font-size:11px;color:var(--gray-400);margin-top:16px;line-height:1.6;}
+
+/* TOP BAR */
+.topbar{position:sticky;top:0;z-index:200;background:white;border-bottom:1px solid var(--border);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.tl{display:flex;align-items:center;gap:12px;}
+.logo-box{width:32px;height:32px;background:var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.logo-box svg{width:18px;height:18px;fill:white;}
+.logo-name{font-size:15px;font-weight:800;color:var(--navy);}
+.logo-badge{font-size:11px;font-weight:700;background:var(--brand-light);color:var(--brand);padding:3px 8px;border-radius:100px;}
+.unsaved-dot{width:8px;height:8px;background:var(--red);border-radius:50%;display:none;}
+.unsaved-dot.show{display:block;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.tr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.save-badge{display:none;align-items:center;gap:5px;font-size:12px;color:var(--green);font-weight:600;}
+.save-badge.show{display:flex;}
+.btn-sm{padding:8px 14px;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px;border:none;}
+.btn-preview{border:1.5px solid var(--border);background:white;color:var(--gray-600);}
+.btn-preview:hover{border-color:var(--brand);color:var(--brand);}
+.btn-reset{border:1.5px solid var(--red-light);background:white;color:var(--red);}
+.btn-reset:hover{background:var(--red-light);}
+.btn-save{background:var(--brand);color:white;}
+.btn-save:hover{background:var(--brand-hover);}
+.btn-export{background:#1a7a3a;color:white;}
+.btn-export:hover{background:#155e2c;}
+.btn-logout{border:1.5px solid var(--border);background:white;color:var(--gray-600);}
+.btn-logout:hover{background:var(--gray-50);}
+
+/* MAIN TABS */
+.main-tabs{background:white;border-bottom:2px solid var(--border);display:flex;padding:0 1.5rem;overflow-x:auto;}
+.main-tab{padding:14px 22px;font-size:14px;font-weight:700;color:var(--gray-600);border:none;background:transparent;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:7px;white-space:nowrap;}
+.main-tab:hover{color:var(--navy);}
+.main-tab.active{color:var(--brand);border-bottom-color:var(--brand);}
+.tab-count{background:var(--brand-light);color:var(--brand);font-size:11px;font-weight:800;padding:2px 7px;border-radius:100px;}
+.tab-count.red{background:var(--red-light);color:var(--red);}
+
+/* PAGE */
+.page{display:flex;min-height:calc(100vh - 110px);}
+.sidebar{width:200px;flex-shrink:0;background:white;border-right:1px solid var(--border);padding:14px 10px;position:sticky;top:110px;height:calc(100vh - 110px);overflow-y:auto;}
+.sb-label{font-size:10px;font-weight:700;color:var(--gray-400);letter-spacing:1px;padding:0 8px;margin:14px 0 5px;}
+.sb-label:first-child{margin-top:0;}
+.sb-btn{display:flex;align-items:center;gap:7px;padding:9px 12px;border-radius:var(--r-sm);font-size:13px;font-weight:500;color:var(--gray-600);cursor:pointer;background:none;border:none;width:100%;text-align:left;transition:all .15s;}
+.sb-btn:hover{background:var(--gray-50);color:var(--navy);}
+.sb-btn.active{background:var(--brand-light);color:var(--brand);font-weight:700;}
+.content{flex:1;padding:1.5rem;overflow-x:hidden;}
+
+/* PANEL */
+.panel{background:white;border-radius:var(--r-lg);border:1px solid var(--border);margin-bottom:18px;overflow:hidden;}
+.ph{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.ph-title{font-size:15px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:7px;}
+.ph-desc{font-size:13px;color:var(--gray-600);margin-top:2px;}
+.pb{padding:20px 22px;}
+.pdiv{height:1px;background:var(--border);margin:18px 0;}
+.sub-title{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:7px;}
+.sub-title::before{content:'';display:block;width:3px;height:14px;background:var(--brand);border-radius:2px;}
+
+/* LANG TABS (콘텐츠 KO/EN 전환) */
+.ltabs{display:inline-flex;border:1.5px solid var(--border);border-radius:var(--r-sm);overflow:hidden;background:white;margin-bottom:14px;}
+.ltab{padding:6px 14px;font-size:12px;font-weight:700;color:var(--gray-600);background:transparent;border:none;cursor:pointer;transition:all 0.15s;}
+.ltab.active{background:var(--brand);color:white;}
+
+/* IMAGE UPLOAD */
+.ugrid{display:grid;gap:14px;}
+.g3{grid-template-columns:repeat(3,1fr);}
+.g2{grid-template-columns:repeat(2,1fr);}
+.ucard{border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;}
+.uch{padding:9px 13px;border-bottom:1px solid var(--border);background:var(--gray-50);display:flex;align-items:center;gap:7px;}
+.ucnum{width:20px;height:20px;border-radius:50%;background:var(--brand);color:white;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.uclbl{font-size:13px;font-weight:700;color:var(--navy);}
+.ucst{margin-left:auto;font-size:11px;font-weight:600;padding:2px 7px;border-radius:100px;}
+.st-d{background:var(--gray-100);color:var(--gray-400);}
+.st-u{background:var(--green-light);color:var(--green);}
+.uzone{aspect-ratio:16/9;position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:var(--gray-50);border:2px dashed var(--border);margin:12px;border-radius:var(--r-sm);transition:all .2s;overflow:hidden;}
+.uzone.has{border-style:solid;border-color:var(--border);background:#000;}
+.uzone.drag{border-color:var(--brand);background:var(--brand-light);}
+.uzone:hover .uov{opacity:1;}
+.uzi{font-size:26px;opacity:.35;}
+.uzt{font-size:12px;color:var(--gray-400);font-weight:500;text-align:center;line-height:1.5;}
+.uzh{font-size:11px;color:var(--gray-400);}
+.upr{position:absolute;inset:0;background-size:cover;background-position:center;}
+.uov{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;gap:8px;opacity:0;transition:opacity .2s;}
+.uob{padding:6px 12px;border-radius:var(--r-sm);font-size:12px;font-weight:700;cursor:pointer;border:none;}
+.uoc{background:white;color:var(--navy);}
+.uod{background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.4);}
+.uod:hover{background:var(--red);}
+.hf{display:none;}
+
+/* FIELDS */
+.fg{display:grid;gap:12px;}
+.fg2{grid-template-columns:1fr 1fr;}
+.fgrp{display:flex;flex-direction:column;gap:5px;}
+.flbl{font-size:12px;font-weight:700;color:var(--gray-600);}
+.finp,.fsel,.ftxt{padding:10px 13px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:14px;color:var(--navy);outline:none;transition:border-color .15s;background:white;-webkit-appearance:none;}
+.finp:focus,.fsel:focus,.ftxt:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(27,43,74,.1);}
+.ftxt{resize:vertical;min-height:70px;line-height:1.7;}
+.fhint{font-size:11px;color:var(--gray-400);}
+
+/* INFO BANNER */
+.info-banner{background:var(--brand-light);border:1px solid rgba(27,43,74,.15);border-radius:var(--r-sm);padding:11px 15px;margin-bottom:16px;font-size:13px;color:#0F1D33;display:flex;align-items:flex-start;gap:9px;line-height:1.6;}
+.warn-banner{background:var(--yellow-light);border:1px solid #FDE68A;border-radius:var(--r-sm);padding:11px 15px;margin-bottom:16px;font-size:13px;color:#92400E;display:flex;align-items:flex-start;gap:9px;line-height:1.6;}
+
+/* APPLICATION MANAGEMENT */
+.apps-tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+.apps-tab{padding:8px 18px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:white;font-size:13px;font-weight:600;color:var(--gray-600);cursor:pointer;transition:all .15s;}
+.apps-tab.active{background:var(--brand);border-color:var(--brand);color:white;}
+.apps-panel{display:none;}
+.apps-panel.active{display:block;}
+
+/* CALENDAR */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.cal-month{font-size:18px;font-weight:800;color:var(--navy);}
+.cal-nav-btn{width:34px;height:34px;border:1.5px solid var(--border);border-radius:var(--r-sm);background:white;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--gray-600);transition:all .15s;}
+.cal-nav-btn:hover{border-color:var(--brand);color:var(--brand);}
+.cal-nav-btn.today-btn{width:52px;font-size:12px;font-weight:600;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-dow{text-align:center;font-size:11px;font-weight:700;color:var(--gray-400);padding:6px 0;}
+.cal-cell{border:1px solid var(--border);border-radius:var(--r-sm);padding:8px;min-height:82px;background:white;cursor:default;transition:all .15s;position:relative;}
+.cal-cell.has-apps{cursor:pointer;}
+.cal-cell.has-apps:hover{border-color:var(--brand);background:var(--brand-light);}
+.cal-cell.today{border-color:var(--brand);background:var(--brand-light);}
+.cal-cell.other-month{background:var(--gray-50);opacity:.5;}
+.cal-day{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:5px;}
+.cal-chip{font-size:10px;font-weight:700;padding:2px 6px;border-radius:100px;display:block;margin-bottom:2px;white-space:nowrap;}
+.cc-tour{background:#DBEAFE;color:#1D4ED8;}
+.cc-contract{background:#DCFCE7;color:#166534;}
+.cc-visitor{background:#FEF3C7;color:#92400E;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;}
+.stat-card{background:white;border:1px solid var(--border);border-radius:var(--r-md);padding:16px 18px;}
+.sc-label{font-size:12px;color:var(--gray-400);font-weight:500;margin-bottom:4px;}
+.sc-num{font-size:26px;font-weight:800;color:var(--navy);letter-spacing:-.5px;}
+.sc-num.blue{color:var(--brand);}
+.sc-num.orange{color:#F59E0B;}
+.sc-num.green{color:var(--green);}
+.sc-num.amber{color:#92400E;}
+
+/* APP LIST */
+.list-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.list-filters{display:flex;gap:8px;flex-wrap:wrap;}
+.filter-sel{padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;background:white;color:var(--gray-600);cursor:pointer;outline:none;}
+.filter-sel:focus{border-color:var(--brand);}
+.search-input{padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:13px;outline:none;min-width:180px;}
+.search-input:focus{border-color:var(--brand);}
+.dl-btn{padding:8px 16px;background:var(--green);color:white;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s;}
+.dl-btn:hover{background:#16A34A;}
+.app-table-wrap{border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;}
+table.app-tbl{width:100%;border-collapse:collapse;background:white;}
+table.app-tbl thead tr{background:var(--gray-50);}
+table.app-tbl th{padding:12px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--gray-400);letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap;}
+table.app-tbl td{padding:14px;font-size:13px;color:var(--gray-800);border-bottom:1px solid var(--border);vertical-align:middle;}
+table.app-tbl tr:last-child td{border-bottom:none;}
+table.app-tbl tr:hover td{background:var(--gray-50);}
+.type-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;}
+.tb-tour{background:#DBEAFE;color:#1D4ED8;}
+.tb-contract{background:#DCFCE7;color:#166534;}
+.lang-badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;background:var(--gray-100);color:var(--gray-600);margin-left:4px;vertical-align:middle;}
+.status-sel{padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:12px;background:white;cursor:pointer;outline:none;color:var(--navy);font-weight:600;min-width:130px;}
+.status-sel:focus{border-color:var(--brand);}
+.status-sel.st-신청확인{border-color:#93C5FD;background:#EFF6FF;color:#1D4ED8;}
+.status-sel.st-연락완료{border-color:#86EFAC;background:#F0FDF4;color:#166534;}
+.status-sel.st-계약진행{border-color:#FDE68A;background:#FFFBEB;color:#92400E;}
+.status-sel.st-진행대기{border-color:#E9D5FF;background:#FAF5FF;color:#6B21A8;}
+.status-sel.st-계약미진행종결{border-color:#FECACA;background:#FEF2F2;color:#991B1B;}
+.app-name{font-weight:700;color:var(--navy);}
+.app-date{font-size:11px;color:var(--gray-400);}
+.row-actions{display:flex;gap:6px;}
+.row-action-btn{padding:5px 10px;border:1px solid var(--border);background:white;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;color:var(--gray-600);transition:all 0.15s;}
+.row-action-btn:hover{border-color:var(--brand);color:var(--brand);}
+.row-action-btn.del:hover{border-color:var(--red);color:var(--red);background:var(--red-light);}
+.empty-state{padding:48px;text-align:center;color:var(--gray-400);background:white;border-radius:var(--r-lg);border:1px solid var(--border);}
+.empty-state-icon{font-size:40px;margin-bottom:12px;}
+.empty-state-txt{font-size:14px;font-weight:500;}
+
+/* DAY MODAL */
+.day-modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px;}
+.day-modal-overlay.open{display:flex;}
+.day-modal{background:white;border-radius:var(--r-lg);max-width:520px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.15);animation:mup .25s ease;}
+@keyframes mup{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.day-modal-head{padding:20px 22px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.day-modal-title{font-size:16px;font-weight:800;color:var(--navy);}
+.dm-close{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--border);background:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--gray-400);}
+.dm-close:hover{background:var(--gray-100);}
+.day-modal-body{padding:16px 22px;}
+
+/* FAQ EDITOR */
+.faq-cat-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.fct{padding:7px 16px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:white;font-size:13px;font-weight:600;color:var(--gray-600);cursor:pointer;transition:all .15s;}
+.fct.active{background:var(--brand);border-color:var(--brand);color:white;}
+.fpanel{display:none;}
+.fpanel.active{display:block;}
+.frow{background:var(--gray-50);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:8px;}
+.frow-num{font-size:11px;font-weight:700;color:var(--brand);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.fdel{width:26px;height:26px;border-radius:50%;border:1px solid var(--red-light);background:white;color:var(--red);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.fdel:hover{background:var(--red);color:white;border-color:var(--red);}
+.add-faq{width:100%;padding:11px;border:2px dashed var(--border);border-radius:var(--r-md);background:transparent;font-size:13px;font-weight:600;color:var(--gray-400);cursor:pointer;transition:all .15s;}
+.add-faq:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-light);}
+
+/* TRANSIT EDITOR */
+.tr-row{background:var(--gray-50);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;margin-bottom:10px;}
+.tr-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;font-weight:700;color:var(--navy);}
+.tr-fields{display:grid;grid-template-columns:1fr 1fr 90px;gap:8px;}
+
+/* NOTICE */
+.notice-preview{padding:12px 16px;background:var(--gray-50);border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;color:var(--gray-800);line-height:1.7;margin-top:8px;}
+
+/* COLOR SETTINGS */
+.color-page{display:flex;gap:24px;flex-wrap:wrap;}
+.color-left{flex:1;min-width:280px;}
+.color-right{width:280px;flex-shrink:0;}
+.color-presets{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;}
+.color-swatch{width:100%;aspect-ratio:1;border-radius:var(--r-md);cursor:pointer;border:3px solid transparent;transition:all .2s;position:relative;}
+.color-swatch.selected::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;font-weight:900;}
+.color-swatch:hover{transform:scale(1.08);box-shadow:var(--shadow);}
+.color-custom-row{display:flex;align-items:center;gap:12px;padding:14px;background:var(--gray-50);border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:16px;}
+.color-custom-label{font-size:13px;font-weight:700;color:var(--navy);flex:1;}
+input[type=color]{width:48px;height:48px;border:none;border-radius:var(--r-sm);cursor:pointer;padding:0;background:none;}
+input[type=color]::-webkit-color-swatch-wrapper{padding:0;}
+input[type=color]::-webkit-color-swatch{border-radius:var(--r-sm);border:none;}
+.color-current-hex{font-size:13px;font-weight:700;color:var(--navy);font-family:monospace;background:var(--gray-100);padding:6px 12px;border-radius:var(--r-sm);}
+.color-apply-btn{width:100%;padding:13px;background:var(--brand);color:white;border:none;border-radius:var(--r-sm);font-size:15px;font-weight:800;cursor:pointer;transition:all .15s;margin-top:16px;}
+.color-apply-btn:hover{background:var(--brand-hover);transform:translateY(-1px);}
+.color-preview-panel{background:white;border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;}
+.cpv-header{padding:16px 20px;border-bottom:1px solid var(--border);}
+.cpv-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;}
+.cpv-btn{padding:9px 20px;border:none;border-radius:var(--r-sm);color:white;font-size:13px;font-weight:700;transition:background .3s;cursor:default;}
+.cpv-body{padding:16px 20px;}
+.cpv-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:100px;margin-bottom:8px;transition:all .3s;}
+.cpv-text{font-size:13px;color:var(--gray-600);line-height:1.6;}
+.cpv-link{font-size:13px;font-weight:700;transition:color .3s;text-decoration:none;}
+.color-name-list{display:flex;flex-direction:column;gap:6px;margin-top:14px;}
+.cn-item{display:flex;align-items:center;gap:10px;font-size:13px;}
+.cn-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--navy);color:white;padding:12px 18px;border-radius:var(--r-md);font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);transform:translateY(70px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;max-width:340px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{background:#1A7A3A;}
+.toast.err{background:var(--red);}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .sidebar{display:none;}
+  .g3,.g2{grid-template-columns:1fr;}
+  .fg2,.tr-fields{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .color-page{flex-direction:column;}
+  .color-right{width:100%;}
+  .color-presets{grid-template-columns:repeat(4,1fr);}
+}
+
+/* 사이드바 없을 때 콘텐츠 전체 너비 */
+.page.full-width{display:block !important;}
+.page.full-width > .content{width:100%;max-width:1200px;margin:0 auto;}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LOGIN GATE (간단한 비밀번호 보호)
+═══════════════════════════════════════════ -->
+<div class="login-gate" id="loginGate">
+  <div class="login-card">
+    <div class="login-logo"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V21H3V9.5Z"/></svg></div>
+    <div class="login-title">관리자 로그인</div>
+    <div class="login-sub">지웰홈스 라이프 강동 어드민</div>
+    <input class="login-input" id="loginPw" type="password" placeholder="비밀번호" autocomplete="off" onkeydown="if(event.key==='Enter')tryLogin()">
+    <button class="login-btn" onclick="tryLogin()">로그인</button>
+    <div class="login-err" id="loginErr">❌ 비밀번호가 올바르지 않습니다</div>
+    <div class="login-hint">
+      🔒 Firebase 인증으로 보호됩니다<br>
+      ※ 비밀번호 변경: Firebase 콘솔 → Authentication → Users
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOP BAR
+═══════════════════════════════════════════ -->
+<div class="topbar" style="display:none;" id="topbar">
+  <div class="tl">
+    <div class="logo-box"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V21H3V9.5Z"/></svg></div>
+    <span class="logo-name">지웰홈스 라이프 강동</span>
+    <span class="logo-badge">관리자</span>
+    <span class="unsaved-dot" id="unsavedDot" title="저장되지 않은 변경사항"></span>
+  </div>
+  <div class="tr">
+    <div class="save-badge" id="saveBadge">✓ 저장됨</div>
+    <button class="btn-sm btn-preview" onclick="window.open('gwell-life-gangdong.html','_blank')">👁 미리보기</button>
+    <button class="btn-sm btn-export" onclick="downloadDataFile()" title="모든 데이터를 gwell-data.js 파일로 저장합니다">📦 데이터 파일 저장</button>
+    <button class="btn-sm btn-reset" onclick="resetAll()">초기화</button>
+    <button class="btn-sm btn-save" onclick="saveAll()">💾 저장하기</button>
+    <button class="btn-sm btn-logout" onclick="logout()" title="로그아웃">🔒</button>
+  </div>
+</div>
+
+<!-- MAIN TABS -->
+<div class="main-tabs" style="display:none;" id="mainTabs">
+  <button class="main-tab active" onclick="switchMainTab('edit',this)">✏️ 콘텐츠 편집</button>
+  <button class="main-tab" onclick="switchMainTab('apps',this)" id="apps-main-tab">📋 신청 관리 <span class="tab-count red" id="new-count">0</span></button>
+  <button class="main-tab" onclick="switchMainTab('notify',this)">🔔 알림 설정</button>
+  <button class="main-tab" onclick="switchMainTab('colors',this)">🎨 색상 설정</button>
+</div>
+
+<div class="page" id="adminPage" style="display:none;">
+  <!-- SIDEBAR (콘텐츠 편집 전용) -->
+  <div class="sidebar" id="edit-sidebar">
+    <div class="sb-label">이미지 & 텍스트</div>
+    <button class="sb-btn active" onclick="navSection('hero',this)">🎬 히어로</button>
+    <button class="sb-btn" onclick="navSection('stats',this)">✨ 요약·강조 문구</button>
+    <button class="sb-btn" onclick="navSection('overview',this)">🏢 공간 개요</button>
+    <button class="sb-btn" onclick="navSection('amenity',this)">🛋️ 커뮤니티</button>
+    <button class="sb-btn" onclick="navSection('rooms',this)">🛏️ 룸 타입</button>
+    <div class="sb-label">추가 편집</div>
+    <button class="sb-btn" onclick="navSection('notice',this)">📌 안내 문구</button>
+    <button class="sb-btn" onclick="navSection('location',this)">📍 오시는 길</button>
+    <button class="sb-btn" onclick="navSection('faq',this)">❓ FAQ</button>
+    <button class="sb-btn" onclick="navSection('promo',this)">🎁 프로모션 팝업</button>
+    <div class="sb-label">빠른 작업</div>
+    <button class="sb-btn" onclick="saveAll()">💾 저장</button>
+    <button class="sb-btn" style="color:var(--red)" onclick="resetAll()">🔄 초기화</button>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content" id="main-content">
+
+    <!-- ════════════════ 콘텐츠 편집 ════════════════ -->
+    <div id="tab-edit">
+      <div class="info-banner">
+        💡
+        <div>
+          이미지 업로드 또는 텍스트 수정 후 <strong>저장하기</strong>를 눌러주세요. <strong>Cmd/Ctrl+S</strong>로 빠르게 저장할 수 있습니다.<br>
+          텍스트는 <strong>한국어/영어</strong> 모두 입력 가능하며, 메인 페이지에서 사용자가 선택한 언어로 표시됩니다.
+        </div>
+      </div>
+
+      <!-- HERO -->
+      <div class="panel" id="section-hero">
+        <div class="ph"><div><div class="ph-title">🎬 히어로 슬라이드</div><div class="ph-desc">메인 배경 이미지 최대 5장 + 헤드라인 · 서브 문구</div></div></div>
+        <div class="pb">
+          <div class="sub-title">슬라이드 이미지</div>
+          <div class="ugrid" id="hero-upload-grid" style="grid-template-columns:repeat(5,1fr)"></div>
+          <div class="pdiv"></div>
+          <div class="sub-title">히어로 텍스트</div>
+          <div class="ltabs" role="group" aria-label="언어">
+            <button class="ltab active" data-langtab="ko" onclick="switchLangTab('hero','ko',this)">🇰🇷 한국어</button>
+            <button class="ltab" data-langtab="en" onclick="switchLangTab('hero','en',this)">🇺🇸 English</button>
+          </div>
+          <div class="fg">
+            <div class="fgrp" id="hero-title-ko-wrap"><label class="flbl">메인 타이틀 (한국어)</label><textarea class="ftxt" id="hero-title-ko" rows="3" oninput="mu()">무드한 공간에서
+다양한 &lt;span&gt;라이프 스타일&lt;/span&gt;을
+경험한다</textarea><div class="fhint">* &lt;span&gt; 태그 내 텍스트는 포인트 컬러로 강조됩니다 · 줄바꿈은 &lt;br&gt;로 자동 변환</div></div>
+            <div class="fgrp" id="hero-title-en-wrap" style="display:none;"><label class="flbl">메인 타이틀 (English)</label><textarea class="ftxt" id="hero-title-en" rows="3" oninput="mu()">Experience
+your own &lt;span&gt;lifestyle&lt;/span&gt;
+in a mood-driven space</textarea></div>
+            <div class="fgrp" id="hero-desc-ko-wrap"><label class="flbl">서브 설명 (한국어)</label><textarea class="ftxt" id="hero-desc-ko" rows="3" oninput="mu()">서울 강동구 길동역 도보 3분 · 130실 풀퍼니시드
+커뮤니티 라운지 · 피트니스 · 시네마룸 포함</textarea></div>
+            <div class="fgrp" id="hero-desc-en-wrap" style="display:none;"><label class="flbl">서브 설명 (English)</label><textarea class="ftxt" id="hero-desc-en" rows="3" oninput="mu()">3-min walk from Gildong Station, Seoul · 130 fully-furnished units
+Lounge · Fitness · Cinema Room included</textarea></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="panel" id="section-stats">
+        <div class="ph"><div><div class="ph-title">✨ 요약·강조 문구</div><div class="ph-desc">히어로 하단 통계/강조 문구 5개 · &lt;em&gt;숫자&lt;/em&gt; 형식으로 포인트 색 강조</div></div></div>
+        <div class="pb">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;" id="stats-editor"></div>
+          <div class="fhint" style="margin-top:10px;">💡 숫자 강조 예시: <code style="background:var(--gray-100);padding:2px 6px;border-radius:4px;">&lt;em&gt;130&lt;/em&gt;실</code> → <em style="color:var(--brand);font-style:normal;">130</em>실 (포인트 컬러로 표시)</div>
+        </div>
+      </div>
+
+      <!-- OVERVIEW -->
+      <div class="panel" id="section-overview">
+        <div class="ph"><div><div class="ph-title">🏢 공간 개요 이미지</div><div class="ph-desc">공간 소개 섹션의 건물·로비 대표 이미지 · 최대 3장 슬라이드</div></div></div>
+        <div class="pb">
+          <div id="overview-upload"></div>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:10px;display:flex;align-items:center;gap:6px;">💡 건물 외관 또는 내부 로비 · 낮 시간 자연광 권장 · 최소 1200×900px · 4:3 또는 정방형</div>
+        </div>
+      </div>
+
+      <!-- AMENITY -->
+      <div class="panel" id="section-amenity">
+        <div class="ph"><div><div class="ph-title">🛋️ 커뮤니티 라운지</div><div class="ph-desc">3개 라운지 이미지 · 이름 · 소개 문구</div></div></div>
+        <div class="pb" id="amenity-editor"></div>
+      </div>
+
+      <!-- ROOMS -->
+      <div class="panel" id="section-rooms">
+        <div class="ph"><div><div class="ph-title">🛏️ 룸 타입</div><div class="ph-desc">Rise · Cozy · Studio 타입 카드 이미지 + 인기/만실 상태</div></div></div>
+        <div class="pb">
+          <div class="ugrid g3" id="rooms-upload-grid"></div>
+          <p style="font-size:12px;color:var(--gray-400);margin-top:10px;">💡 드래그 앤 드롭 또는 클릭해 업로드 · JPG·PNG·WebP · 최대 20MB · 자동 압축됨</p>
+        </div>
+      </div>
+
+      <!-- NOTICE -->
+      <div class="panel" id="section-notice">
+        <div class="ph"><div><div class="ph-title">📌 룸 안내 문구</div><div class="ph-desc">룸 타입 섹션 하단 안내 배너 텍스트</div></div></div>
+        <div class="pb">
+          <div class="fgrp"><label class="flbl">안내 문구</label><textarea class="ftxt" id="notice-text" rows="3" oninput="mu();document.getElementById('notice-preview').innerHTML=this.value"><strong>📌 단기계약 추가요금:</strong> 3개월 +10만원 / 6개월 +5만원 &nbsp;|&nbsp; 커뮤니티 이용료 포함 &nbsp;|&nbsp; 전기·수도는 실사용량 별도 부과</textarea><div class="fhint">* &lt;strong&gt; 태그로 볼드 강조 가능</div></div>
+          <div style="font-size:12px;font-weight:700;color:var(--gray-400);margin:10px 0 5px;">미리보기</div>
+          <div class="notice-preview" id="notice-preview"><strong>📌 단기계약 추가요금:</strong> 3개월 +10만원 / 6개월 +5만원 &nbsp;|&nbsp; 커뮤니티 이용료 포함 &nbsp;|&nbsp; 전기·수도는 실사용량 별도 부과</div>
+        </div>
+      </div>
+
+      <!-- LOCATION -->
+      <div class="panel" id="section-location">
+        <div class="ph"><div><div class="ph-title">📍 오시는 길</div><div class="ph-desc">교통 정보 · 연락처</div></div></div>
+        <div class="pb">
+          <div class="sub-title">대중교통 정보</div>
+          <div class="tr-row"><div class="tr-head">🚇 교통편 1</div><div class="tr-fields"><div class="fgrp"><label class="flbl">역/이름</label><input class="finp" id="tr-name-0" type="text" value="5호선 길동역 1번 출구" oninput="mu()"></div><div class="fgrp"><label class="flbl">주소·방면</label><input class="finp" id="tr-sub-0" type="text" value="서울특별시 강동구 천호대로177길 50" oninput="mu()"></div><div class="fgrp"><label class="flbl">소요시간</label><input class="finp" id="tr-time-0" type="text" value="도보 3분" oninput="mu()"></div></div></div>
+          <div class="tr-row"><div class="tr-head">🚇 교통편 2</div><div class="tr-fields"><div class="fgrp"><label class="flbl">역/이름</label><input class="finp" id="tr-name-1" type="text" value="5호선 강동역 2번·2-1번 출구" oninput="mu()"></div><div class="fgrp"><label class="flbl">주소·방면</label><input class="finp" id="tr-sub-1" type="text" value="강동성심병원 방면" oninput="mu()"></div><div class="fgrp"><label class="flbl">소요시간</label><input class="finp" id="tr-time-1" type="text" value="도보 7분" oninput="mu()"></div></div></div>
+          <div class="pdiv"></div>
+          <div class="sub-title">연락처 정보</div>
+          <div class="fg fg2"><div class="fgrp"><label class="flbl">웹사이트</label><input class="finp" id="loc-web" value="gwellhomeslife.com" oninput="mu()"></div><div class="fgrp"><label class="flbl">이메일</label><input class="finp" id="loc-email" value="lifegangdong@sl-platform.com" oninput="mu()"></div></div>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div class="panel" id="section-faq">
+        <div class="ph"><div><div class="ph-title">❓ FAQ</div><div class="ph-desc">자주 묻는 질문 추가/수정/삭제 · 한국어 / English 모두 등록 가능</div></div></div>
+        <div class="pb">
+          <div class="ltabs" role="group" aria-label="언어">
+            <button class="ltab active" data-langtab="ko" onclick="switchFaqLang('ko',this)">🇰🇷 한국어</button>
+            <button class="ltab" data-langtab="en" onclick="switchFaqLang('en',this)">🇺🇸 English</button>
+          </div>
+          <div class="faq-cat-tabs">
+            <button class="fct active" onclick="switchFaqCat('contract',this)">📋 계약 관련</button>
+            <button class="fct" onclick="switchFaqCat('life',this)">🏡 생활 관련</button>
+            <button class="fct" onclick="switchFaqCat('room',this)">🛏️ 룸 관련</button>
+          </div>
+          <div class="fpanel active" id="faqp-contract"><div id="faql-contract"></div><button class="add-faq" onclick="addFaq('contract')">+ 질문 추가</button></div>
+          <div class="fpanel" id="faqp-life"><div id="faql-life"></div><button class="add-faq" onclick="addFaq('life')">+ 질문 추가</button></div>
+          <div class="fpanel" id="faqp-room"><div id="faql-room"></div><button class="add-faq" onclick="addFaq('room')">+ 질문 추가</button></div>
+        </div>
+      </div>
+
+      <!-- PROMO POPUP EDITOR -->
+      <div class="panel" id="section-promo">
+        <div class="ph"><div><div class="ph-title">🎁 프로모션 팝업</div><div class="ph-desc">사이트 진입 시 자동으로 표시되는 팝업 · 활성/비활성 · 기간 설정 · 한국어 / English</div></div></div>
+        <div class="pb">
+          <div class="info-banner">💡 <div>홈페이지 접속 시 설정한 지연시간 후 자동으로 표시됩니다. 사용자는 "오늘 하루 보지 않기" 또는 "다시 보지 않기"를 선택할 수 있습니다.<br>💡 <strong>활성화 토글이 꺼져 있으면 팝업이 표시되지 않습니다.</strong></div></div>
+
+          <!-- 활성화 + 기간 -->
+          <div class="sub-title">활성화 · 표시 기간</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:18px;">
+            <div class="fgrp" style="grid-column:1/-1;background:var(--gray-50);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px;">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" id="promo-enabled" style="width:20px;height:20px;cursor:pointer;accent-color:var(--brand);" onchange="mu();updatePromoStatus()">
+                <span style="font-size:14px;font-weight:700;color:var(--navy);">프로모션 팝업 활성화</span>
+                <span id="promo-status-label" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;margin-left:auto;">비활성</span>
+              </label>
+            </div>
+            <div class="fgrp"><label class="flbl">시작일 (선택)</label><input class="finp" id="promo-start" type="date" oninput="mu()"><div class="fhint">비워두면 즉시 시작</div></div>
+            <div class="fgrp"><label class="flbl">종료일 (선택)</label><input class="finp" id="promo-end" type="date" oninput="mu()"><div class="fhint">비워두면 무기한</div></div>
+            <div class="fgrp"><label class="flbl">표시 지연 (초)</label><input class="finp" id="promo-delay" type="number" min="0" max="60" value="2" oninput="mu()"><div class="fhint">접속 후 N초 뒤 표시</div></div>
+            <div class="fgrp"><label class="flbl">CTA 동작</label>
+              <select class="fsel" id="promo-cta-action" oninput="mu();updateCtaUrlVisibility()">
+                <option value="tour">투어 신청 모달 열기</option>
+                <option value="contract">계약 신청 모달 열기</option>
+                <option value="url">외부 URL로 이동</option>
+                <option value="close">닫기만 (액션 없음)</option>
+              </select>
+            </div>
+          </div>
+          <div class="fgrp" id="promo-cta-url-wrap" style="display:none;margin-bottom:18px;"><label class="flbl">외부 URL</label><input class="finp" id="promo-cta-url" type="url" placeholder="https://example.com/event" oninput="mu()"><div class="fhint">새 창에서 열림</div></div>
+
+          <div class="pdiv"></div>
+
+          <!-- 이미지 -->
+          <div class="sub-title">팝업 이미지 (선택)</div>
+          <div style="max-width:400px;">
+            <div class="ucard">
+              <div class="uch"><div class="ucnum">📷</div><div class="uclbl">팝업 상단 이미지</div><div class="ucst st-d" id="up-s-promo">기본값</div></div>
+              <div class="uzone" id="up-z-promo" onclick="trig('up-fin-promo')" ondrop="dropPromo(event)" ondragover="dov(event,'up-z-promo')" ondragleave="dl('up-z-promo')" style="aspect-ratio:16/10;">
+                <div class="upr" id="up-p-promo"></div>
+                <div class="uov"><button class="uob uoc" onclick="event.stopPropagation();trig('up-fin-promo')">변경</button><button class="uob uod" onclick="event.stopPropagation();remPromo()">삭제</button></div>
+                <div class="uzi" id="up-i-promo">🎁</div>
+                <div class="uzt" id="up-t-promo">클릭 또는 드래그</div>
+                <div class="uzh">권장 800×500px · 16:10</div>
+              </div>
+              <input type="file" class="hf" id="up-fin-promo" accept="image/*" onchange="selPromo(event)">
+            </div>
+            <div class="fhint" style="margin-top:8px;">💡 이미지를 추가하지 않으면 기본 🎁 아이콘이 표시됩니다.</div>
+          </div>
+
+          <div class="pdiv"></div>
+
+          <!-- 한국어 콘텐츠 -->
+          <div class="ltabs" role="group" aria-label="언어">
+            <button class="ltab active" data-langtab="ko" onclick="switchPromoLang('ko',this)">🇰🇷 한국어</button>
+            <button class="ltab" data-langtab="en" onclick="switchPromoLang('en',this)">🇺🇸 English</button>
+          </div>
+          <div id="promo-ko">
+            <div class="fg">
+              <div class="fgrp"><label class="flbl">배지 텍스트 (한국어)</label><input class="finp" id="promo-chip-ko" type="text" placeholder="✦ 한정 이벤트" oninput="mu()"></div>
+              <div class="fgrp"><label class="flbl">제목 (한국어)</label><input class="finp" id="promo-title-ko" type="text" placeholder="지웰홈스 라이프 강동 입주 이벤트" oninput="mu()"></div>
+              <div class="fgrp"><label class="flbl">본문 (한국어)</label><textarea class="ftxt" id="promo-desc-ko" rows="3" placeholder="지금 계약하시면 첫 달 임대료 할인 혜택!&#10;자세한 내용은 담당자에게 문의해 주세요." oninput="mu()"></textarea><div class="fhint">* 줄바꿈 그대로 표시됩니다</div></div>
+              <div class="fgrp"><label class="flbl">CTA 버튼 텍스트 (한국어)</label><input class="finp" id="promo-cta-ko" type="text" placeholder="자세히 알아보기 →" oninput="mu()"></div>
+            </div>
+          </div>
+          <div id="promo-en" style="display:none;">
+            <div class="fg">
+              <div class="fgrp"><label class="flbl">Badge (English)</label><input class="finp" id="promo-chip-en" type="text" placeholder="✦ Limited Event" oninput="mu()"></div>
+              <div class="fgrp"><label class="flbl">Title (English)</label><input class="finp" id="promo-title-en" type="text" placeholder="GWELL Homes. LIFE Gangdong Move-in Event" oninput="mu()"></div>
+              <div class="fgrp"><label class="flbl">Description (English)</label><textarea class="ftxt" id="promo-desc-en" rows="3" placeholder="Sign your contract now and get first month rent discount!&#10;Contact us for details." oninput="mu()"></textarea></div>
+              <div class="fgrp"><label class="flbl">CTA Button Text (English)</label><input class="finp" id="promo-cta-en" type="text" placeholder="Learn More →" oninput="mu()"></div>
+            </div>
+          </div>
+
+          <div class="pdiv"></div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <button class="btn-sm btn-save" onclick="savePromo()">💾 프로모션 저장</button>
+            <button class="btn-sm btn-export" onclick="testPromoNow()" title="저장 + 차단 쿠키 초기화 + 메인 페이지 새 탭에서 강제 표시">🚀 즉시 테스트</button>
+            <button class="btn-sm btn-preview" onclick="previewPromo()">👁 미리보기</button>
+            <button class="btn-sm btn-preview" onclick="resetPromoCookies()" title="이 브라우저의 '오늘 하루 보지 않기/다시 보지 않기' 설정을 초기화합니다">🔄 차단 쿠키 초기화</button>
+            <button class="btn-sm btn-reset" onclick="diagnosePromo()" title="현재 설정 상태를 진단합니다">🔍 진단</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-edit -->
+
+    <!-- ════════════════ 신청 관리 ════════════════ -->
+    <div id="tab-apps" style="display:none;">
+      <div class="warn-banner" id="webhook-warn" style="display:none;">
+        ⚠️
+        <div>
+          <strong>알림이 설정되어 있지 않습니다.</strong> 사용자가 다른 컴퓨터/기기에서 신청한 내역은 이곳에 자동으로 표시되지 않을 수 있습니다.
+          <strong><a href="#" onclick="switchMainTab('notify', document.querySelectorAll('.main-tab')[2]);return false;" style="color:#92400E;text-decoration:underline;">🔔 알림 설정에서 Webhook URL 또는 알림 이메일을 등록</a></strong>해 주세요.
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card"><div class="sc-label">전체 신청</div><div class="sc-num blue" id="stat-total">0</div></div>
+        <div class="stat-card"><div class="sc-label">투어 신청</div><div class="sc-num" id="stat-tour">0</div></div>
+        <div class="stat-card"><div class="sc-label">계약 신청</div><div class="sc-num green" id="stat-contract">0</div></div>
+        <div class="stat-card"><div class="sc-label">신규 (미확인)</div><div class="sc-num orange" id="stat-new">0</div></div>
+        <div class="stat-card"><div class="sc-label">오늘 방문자</div><div class="sc-num amber" id="stat-visitors">0</div></div>
+      </div>
+
+      <div class="apps-tabs">
+        <button class="apps-tab active" onclick="switchAppsTab('dashboard',this)">📅 대시보드</button>
+        <button class="apps-tab" onclick="switchAppsTab('all',this)">📋 전체 목록</button>
+        <button class="apps-tab" onclick="switchAppsTab('tour',this)">🏠 투어 신청</button>
+        <button class="apps-tab" onclick="switchAppsTab('contract',this)">📝 계약 신청</button>
+        <button class="apps-tab" style="margin-left:auto;background:#1a7a3a;color:white;border-color:#1a7a3a;" onclick="downloadDateStats()">📊 날짜별 통계 엑셀</button>
+      </div>
+
+      <!-- Dashboard -->
+      <div class="apps-panel active" id="apanel-dashboard">
+        <div class="panel">
+          <div class="ph">
+            <div class="ph-title" id="cal-title">달력</div>
+            <div style="display:flex;gap:8px;">
+              <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+              <button class="cal-nav-btn today-btn" onclick="changeMonth(0)">오늘</button>
+              <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+            </div>
+          </div>
+          <div class="pb">
+            <div class="cal-grid">
+              <div class="cal-dow">일</div><div class="cal-dow">월</div><div class="cal-dow">화</div><div class="cal-dow">수</div><div class="cal-dow">목</div><div class="cal-dow">금</div><div class="cal-dow">토</div>
+            </div>
+            <div class="cal-grid" id="cal-body" style="margin-top:4px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- List Panels -->
+      <div class="apps-panel" id="apanel-all"><div id="list-all"></div></div>
+      <div class="apps-panel" id="apanel-tour"><div id="list-tour"></div></div>
+      <div class="apps-panel" id="apanel-contract"><div id="list-contract"></div></div>
+    </div><!-- /tab-apps -->
+
+    <!-- ════════════════ 알림 설정 (Webhook + 이메일 + 채팅) ════════════════ -->
+    <div id="tab-notify" style="display:none;">
+      <div class="info-banner">
+        💡
+        <div>
+          <strong>알림 설정은 이 사이트의 가장 중요한 부분입니다.</strong> 사용자가 신청한 내역을 어떻게 받아볼지를 정하는 곳입니다.<br>
+          ✓ <strong>Webhook</strong>: Google Sheets, Slack, Notion, Make.com, Zapier 등 외부 도구로 자동 전송 (권장)<br>
+          ✓ <strong>알림 이메일</strong>: Webhook이 실패하거나 없을 때, 사용자 브라우저에서 메일 작성창이 자동으로 열림 (폴백)<br>
+          ✓ <strong>카카오톡/WhatsApp</strong>: 메인페이지 우측 하단 플로팅 채팅 버튼에 연결됨
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="ph"><div><div class="ph-title">🔔 신청 알림 (Webhook + Email Fallback)</div><div class="ph-desc">사용자가 신청 시 외부 서비스로 자동 전송하거나, 이메일로 받습니다</div></div></div>
+        <div class="pb">
+          <div class="fg">
+            <div class="fgrp">
+              <label class="flbl">Webhook URL (선택) — 1순위</label>
+              <input class="finp" id="set-webhook" type="url" placeholder="https://script.google.com/macros/s/.../exec  또는  https://hooks.slack.com/..." oninput="mu()">
+              <div class="fhint">📌 <strong>추천 방법</strong>: Google Sheets의 Apps Script로 Webhook 만들기 (가장 간단하고 무료)<br>
+              ① Google Sheets 생성 → ② 확장 프로그램 → Apps Script → ③ 코드 붙여넣기 → ④ 배포 → 웹앱 → URL 복사<br>
+              ⚠️ Webhook이 비어있어도 아래 알림 이메일로 백업됩니다.</div>
+            </div>
+            <div class="fgrp">
+              <label class="flbl">알림 이메일 (필수) — Webhook 실패 시 자동 메일창 열림</label>
+              <input class="finp" id="set-email" type="email" placeholder="lifegangdong@sl-platform.com" oninput="mu()">
+              <div class="fhint">📌 사용자 신청 시 이 주소로 자동으로 메일 작성창이 열립니다. (모바일/PC 메일앱 또는 Gmail 등)</div>
+            </div>
+            <div class="pdiv"></div>
+            <div class="sub-title">플로팅 채팅 버튼 (선택)</div>
+            <div class="fg fg2">
+              <div class="fgrp">
+                <label class="flbl">💬 카카오톡 채널 URL</label>
+                <input class="finp" id="set-kakao" type="url" placeholder="http://pf.kakao.com/_xXxXx/chat" oninput="mu()">
+                <div class="fhint">카카오 비즈니스 채널 → 채널 관리 → 상담 URL 복사</div>
+              </div>
+              <div class="fgrp">
+                <label class="flbl">💬 WhatsApp / Line URL</label>
+                <input class="finp" id="set-whatsapp" type="url" placeholder="https://wa.me/821012345678  또는  https://line.me/..." oninput="mu()">
+                <div class="fhint">외국인 대상 채팅 채널</div>
+              </div>
+            </div>
+            <div class="pdiv"></div>
+            <div class="sub-title">기타</div>
+            <div class="fg fg2">
+              <div class="fgrp">
+                <label class="flbl">💵 USD 환율 (메인 페이지 영어 모드용)</label>
+                <input class="finp" id="set-usd" type="number" step="1" min="500" max="3000" placeholder="1340" oninput="mu()">
+                <div class="fhint">영어 페이지에서 임대료를 USD로 자동 환산해 표시 (예: 1340 → ₩만원/1340 = $)</div>
+              </div>
+              <div class="fgrp">
+                <label class="flbl">🔒 관리자 비밀번호 변경</label>
+                <input class="finp" id="set-pw" type="password" placeholder="새 비밀번호 (비워두면 변경 안 함)" oninput="mu()" autocomplete="new-password">
+                <div class="fhint">최소 6자 이상 권장. 기본값: gwell2024</div>
+              </div>
+            </div>
+            <div class="pdiv"></div>
+            <button class="color-apply-btn" onclick="saveSettings()" style="margin-top:0;">✓ 알림 설정 저장하기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Webhook 가이드 -->
+      <div class="panel">
+        <div class="ph"><div><div class="ph-title">📖 Webhook 설정 가이드 (Google Sheets 무료 방법)</div></div></div>
+        <div class="pb" style="line-height:1.8;font-size:13.5px;color:var(--gray-800);">
+          <strong style="display:block;margin-bottom:8px;color:var(--brand);">1️⃣ Google Sheets 만들기</strong>
+          <p style="margin-left:14px;">drive.google.com → 새 Google Sheets 생성 → 이름: "지웰홈스 신청내역"</p>
+
+          <strong style="display:block;margin:14px 0 8px;color:var(--brand);">2️⃣ Apps Script 열기</strong>
+          <p style="margin-left:14px;">상단 메뉴 → <strong>확장 프로그램</strong> → <strong>Apps Script</strong></p>
+
+          <strong style="display:block;margin:14px 0 8px;color:var(--brand);">3️⃣ 아래 코드 붙여넣기</strong>
+          <pre style="background:var(--gray-50);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;overflow-x:auto;line-height:1.5;"><code>function doPost(e) {
+  const data = JSON.parse(e.postData.contents);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1') 
+    || SpreadsheetApp.getActiveSpreadsheet().insertSheet('Sheet1');
+  // 헤더 (첫 행이 비어있을 때만)
+  if(sheet.getLastRow()===0){
+    sheet.appendRow(['접수일시','유형','이름','연락처','이메일','룸타입','기간/시간','희망일','문의사항','상태','언어','ID']);
+  }
+  sheet.appendRow([
+    new Date(data.createdAt),
+    data.type === 'tour' ? '투어' : '계약',
+    data.name, data.phone, data.email || '',
+    data.roomType || '', data.period || data.time || '',
+    data.date || '', data.note || '',
+    data.status || '신청확인', data.lang || 'ko', data.id
+  ]);
+  // 선택: 본인 이메일로도 자동 전송
+  // MailApp.sendEmail('your@email.com', '[지웰홈스] 신규 신청', JSON.stringify(data, null, 2));
+  return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);
+}</code></pre>
+
+          <strong style="display:block;margin:14px 0 8px;color:var(--brand);">4️⃣ 배포 → 웹 앱</strong>
+          <p style="margin-left:14px;">우측 상단 <strong>배포 → 새 배포</strong> → 유형: <strong>웹 앱</strong> → 액세스 권한: <strong>모든 사용자</strong> → 배포 → URL 복사</p>
+
+          <strong style="display:block;margin:14px 0 8px;color:var(--brand);">5️⃣ 위 Webhook URL 칸에 붙여넣기 → 저장</strong>
+          <p style="margin-left:14px;">이제 신청이 자동으로 Google Sheets로 들어옵니다! 📩</p>
+
+          <div style="background:var(--brand-light);border-radius:8px;padding:12px 14px;margin-top:14px;font-size:12.5px;color:#0F1D33;">
+            💡 <strong>대안</strong>: Slack Webhook, Discord Webhook, Make.com(통합), Zapier, Notion API 등 어떤 서비스든 가능합니다. JSON POST를 받는 URL이면 모두 작동합니다.
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-notify -->
+
+    <!-- ════════════════ 색상 설정 ════════════════ -->
+    <div id="tab-colors" style="display:none;">
+      <div class="panel">
+        <div class="ph"><div><div class="ph-title">🎨 포인트 색상 설정</div><div class="ph-desc">웹사이트 전체의 포인트 색상(버튼, 강조 텍스트, 배지 등)을 변경합니다</div></div></div>
+        <div class="pb">
+          <div class="color-page">
+            <div class="color-left">
+              <div class="sub-title">프리셋 색상 선택</div>
+              <div class="color-presets" id="color-presets"></div>
+              <div class="sub-title" style="margin-top:20px;">직접 입력</div>
+              <div class="color-custom-row">
+                <span class="color-custom-label">색상 직접 선택</span>
+                <input type="color" id="color-picker" value="#1B2B4A" oninput="updateColorPreview(this.value)">
+                <span class="color-current-hex" id="color-hex">#1B2B4A</span>
+              </div>
+              <div class="fgrp" style="margin-bottom:0;">
+                <label class="flbl">HEX 코드 직접 입력</label>
+                <input class="finp" id="color-hex-input" type="text" placeholder="#1B2B4A" value="#1B2B4A" oninput="onHexInput(this.value)" style="font-family:monospace;">
+                <div class="fhint">예: #FF6905 · #1B2B4A · #22C55E</div>
+              </div>
+              <button class="color-apply-btn" id="color-apply-btn" onclick="applyColor()">✓ 이 색상 홈페이지에 적용하기</button>
+            </div>
+            <div class="color-right">
+              <div class="sub-title">실시간 미리보기</div>
+              <div class="color-preview-panel">
+                <div class="cpv-header">
+                  <div class="cpv-title">버튼 / 배지</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="cpv-btn" id="pv-btn-main">계약 신청하기</button>
+                    <div class="cpv-chip" id="pv-chip">✦ 룸 타입</div>
+                  </div>
+                </div>
+                <div class="cpv-body">
+                  <div class="cpv-title">텍스트 강조</div>
+                  <p class="cpv-text">무드한 공간에서 다양한 <a class="cpv-link" id="pv-link">라이프 스타일</a>을 경험한다</p>
+                  <div style="margin-top:14px;font-size:12px;font-weight:700;color:var(--gray-400);margin-bottom:6px;">현재 적용된 색상</div>
+                  <div class="color-name-list" id="color-name-list"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-colors -->
+
+  </div><!-- /content -->
+</div><!-- /page -->
+
+<!-- DAY MODAL -->
+<div class="day-modal-overlay" id="day-modal">
+  <div class="day-modal">
+    <div class="day-modal-head">
+      <div class="day-modal-title" id="day-modal-title"></div>
+      <button class="dm-close" onclick="closeDayModal()">✕</button>
+    </div>
+    <div class="day-modal-body" id="day-modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+let unsaved = false;
+const STATUS_OPTS = ['신청확인','연락완료','계약진행','진행대기','계약미진행 종결'];
+const STATUS_CLASS = {'신청확인':'st-신청확인','연락완료':'st-연락완료','계약진행':'st-계약진행','진행대기':'st-진행대기','계약미진행 종결':'st-계약미진행종결'};
+
+function mu(){ if(!unsaved){ unsaved = true; $('unsavedDot').classList.add('show'); $('saveBadge').classList.remove('show'); } }
+function showToast(msg, type=''){
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.className = 'toast'; }, 3500);
+}
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ══════════════════════════════════════════
+   LOGIN GATE (Firebase Authentication)
+═══════════════════════════════════════════ */
+function tryLogin(){
+  const pw = $('loginPw').value.trim();
+  if(!pw) return;
+  if(!window.GwellDB){
+    $('loginErr').textContent = '⏳ 로딩 중... 잠시 후 다시 시도해주세요';
+    $('loginErr').classList.add('show');
+    setTimeout(() => $('loginErr').classList.remove('show'), 3000);
+    return;
+  }
+  $('loginPw').disabled = true;
+  window.GwellDB.signInAdmin(pw).then(() => {
+    // onAuthChange 콜백에서 showAdmin() 호출됨
+  }).catch(err => {
+    let msg = '❌ 비밀번호가 올바르지 않습니다';
+    if(err.code === 'auth/too-many-requests') msg = '⏳ 너무 많은 시도. 잠시 후 다시 시도해주세요';
+    else if(err.code === 'auth/user-not-found') msg = '❌ 관리자 계정이 등록되지 않았습니다';
+    $('loginErr').textContent = msg;
+    $('loginErr').classList.add('show');
+    setTimeout(() => $('loginErr').classList.remove('show'), 4000);
+    $('loginPw').disabled = false;
+    $('loginPw').value = '';
+    $('loginPw').focus();
+  });
+}
+function logout(){
+  if(window.GwellDB) window.GwellDB.signOutAdmin();
+  sessionStorage.removeItem('gwellAuth');
+  location.reload();
+}
+function showAdmin(){
+  $('loginGate').style.display = 'none';
+  $('topbar').style.display = '';
+  $('mainTabs').style.display = '';
+  $('adminPage').style.display = '';
+  init();
+}
+
+/* ══════════════════════════════════════════
+   MAIN TABS
+═══════════════════════════════════════════ */
+function switchMainTab(id, btn){
+  document.querySelectorAll('.main-tab').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  else {
+    // 첫 번째 매칭 탭에 active
+    const tabs = document.querySelectorAll('.main-tab');
+    const orderMap = {edit:0, apps:1, notify:2, colors:3};
+    if(tabs[orderMap[id]]) tabs[orderMap[id]].classList.add('active');
+  }
+  ['edit','apps','notify','colors'].forEach(t => {
+    const el = $('tab-' + t);
+    if(el) el.style.display = t === id ? 'block' : 'none';
+  });
+  const isEdit = id === 'edit';
+  $('edit-sidebar').style.display = isEdit ? '' : 'none';
+  document.querySelector('.page').classList.toggle('full-width', !isEdit);
+  if(id === 'apps'){ renderStats(); renderCalendar(); renderAllLists(); checkWebhookWarn(); }
+  if(id === 'colors'){ initColorPage(); }
+  if(id === 'notify'){ loadSettingsForm(); }
+}
+
+const SECTIONS = ['hero','stats','overview','amenity','rooms','notice','location','faq','promo'];
+function navSection(id, btn){
+  $('section-' + id)?.scrollIntoView({behavior:'smooth', block:'start'});
+  document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+}
+const spy = new IntersectionObserver(e => e.forEach(en => {
+  if(en.isIntersecting){
+    const id = en.target.id.replace('section-','');
+    const i = SECTIONS.indexOf(id);
+    if(i >= 0) document.querySelectorAll('#edit-sidebar .sb-btn').forEach((b,j) => b.classList.toggle('active', j===i));
+  }
+}), {rootMargin:'-35% 0px -60% 0px'});
+
+/* ══════════════════════════════════════════
+   LANG TABS (KO/EN 편집 전환)
+═══════════════════════════════════════════ */
+function switchLangTab(section, lang, btn){
+  const parent = btn.closest('.panel');
+  parent.querySelectorAll('.ltab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // hero
+  if(section === 'hero'){
+    ['ko','en'].forEach(l => {
+      ['title','desc'].forEach(f => {
+        const el = $(`hero-${f}-${l}-wrap`);
+        if(el) el.style.display = l === lang ? '' : 'none';
+      });
+    });
+  } else if(section === 'amenity'){
+    [0,1,2].forEach(i => {
+      ['ko','en'].forEach(l => {
+        const el = $(`amenity-fields-${i}-${l}`);
+        if(el) el.style.display = l === lang ? '' : 'none';
+      });
+    });
+  }
+}
+
+let currentFaqLang = 'ko';
+function switchFaqLang(lang, btn){
+  // 현재 편집 중인 값 캡처 (전환 전)
+  // (실제로는 oninput으로 이미 FAQST에 들어감)
+  currentFaqLang = lang;
+  const parent = btn.closest('.panel');
+  parent.querySelectorAll('.ltab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ['contract','life','room'].forEach(cat => renderFaq(cat));
+}
+
+/* ══════════════════════════════════════════
+   IMAGE UPLOAD HELPERS
+═══════════════════════════════════════════ */
+function mkUploadCard(type, idx, label, emoji, hint){
+  const pid=`up-p-${type}-${idx}`, zid=`up-z-${type}-${idx}`, sid=`up-s-${type}-${idx}`, iid=`up-i-${type}-${idx}`, tid=`up-t-${type}-${idx}`, finId=`up-fin-${type}-${idx}`;
+  return `<div class="ucard">
+    <div class="uch">${idx>=0?`<div class="ucnum">${idx+1}</div>`:''}<div class="uclbl">${label}</div><div class="ucst st-d" id="${sid}">기본값</div></div>
+    <div class="uzone" id="${zid}" onclick="trig('${finId}')" ondrop="drop(event,'${type}',${idx})" ondragover="dov(event,'${zid}')" ondragleave="dl('${zid}')">
+      <div class="upr" id="${pid}"></div>
+      <div class="uov"><button class="uob uoc" onclick="event.stopPropagation();trig('${finId}')">변경</button><button class="uob uod" onclick="event.stopPropagation();rem('${type}',${idx})">삭제</button></div>
+      <div class="uzi" id="${iid}">${emoji}</div><div class="uzt" id="${tid}">클릭 또는 드래그</div><div class="uzh">${hint}</div>
+    </div>
+    <input type="file" class="hf" id="${finId}" accept="image/*" onchange="sel(event,'${type}',${idx})">
+  </div>`;
+}
+
+// 다중 이미지 데이터 구조
+const IMG = {
+  hero:[null,null,null,null,null],
+  amenity:[[null,null,null],[null,null,null],[null,null,null]],
+  room:[[null,null,null],[null,null,null],[null,null,null]],
+  overview:[null,null,null]
+};
+const ROOM_STATE = [
+  {popular:false, fullOccupied:false},
+  {popular:false, fullOccupied:false},
+  {popular:false, fullOccupied:false}
+];
+
+function mkMultiUploadCard(type, itemIdx, imgIdx, emoji, hint){
+  const key = `${type}_${itemIdx}_${imgIdx}`;
+  return `<div class="ucard" style="flex:1">
+    <div class="uch"><div class="ucnum" style="width:18px;height:18px;font-size:9px">${imgIdx+1}</div><div class="uclbl" style="font-size:11px">사진${imgIdx+1}</div><div class="ucst st-d" id="up-s-${key}" style="font-size:10px">기본</div></div>
+    <div class="uzone" id="up-z-${key}" onclick="trig('up-fin-${key}')" ondrop="dropM(event,'${type}',${itemIdx},${imgIdx})" ondragover="dov(event,'up-z-${key}')" ondragleave="dl('up-z-${key}')">
+      <div class="upr" id="up-p-${key}"></div>
+      <div class="uov"><button class="uob uoc" onclick="event.stopPropagation();trig('up-fin-${key}')">변경</button><button class="uob uod" onclick="event.stopPropagation();remM('${type}',${itemIdx},${imgIdx})">삭제</button></div>
+      <div class="uzi" id="up-i-${key}" style="font-size:18px">${emoji}</div>
+      <div class="uzt" id="up-t-${key}" style="font-size:10px">클릭/드래그</div>
+    </div>
+    <input type="file" class="hf" id="up-fin-${key}" accept="image/*" onchange="selM(event,'${type}',${itemIdx},${imgIdx})">
+  </div>`;
+}
+
+function buildEditors(){
+  // Stats
+  const statDefaults = [
+    {num:'130<em>실</em>', label:'총 호실'},
+    {num:'<em>3</em>분', label:'길동역 도보'},
+    {num:'<em>300</em>만원~', label:'최소 보증금'},
+    {num:'<em>3</em>개월~', label:'최단 계약'},
+    {num:'<em>풀</em>퍼니', label:'가구·가전 완비'}
+  ];
+  if($('stats-editor')){
+    $('stats-editor').innerHTML = statDefaults.map((s,i) => `
+      <div class="ucard" style="padding:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--brand);margin-bottom:8px;">항목 ${i+1}</div>
+        <div class="fgrp" style="margin-bottom:8px;"><label class="flbl">숫자/값</label><input class="finp" id="stat-n-${i}" type="text" value="${s.num.replace(/</g,'&lt;').replace(/>/g,'&gt;')}" oninput="mu()" style="font-size:13px;"></div>
+        <div class="fgrp"><label class="flbl">설명 라벨</label><input class="finp" id="stat-l-${i}" type="text" value="${s.label}" oninput="mu()" style="font-size:13px;"></div>
+      </div>`).join('');
+  }
+  // Hero - 5장
+  $('hero-upload-grid').innerHTML = [0,1,2,3,4].map(i => mkUploadCard('hero', i, `슬라이드 ${i+1}`, '🖼️', '1920×1080')).join('');
+
+  // Amenity - 라운지마다 3장 + 한글/영문 텍스트
+  const amenityDefs = [
+    {label:'멤버십 라운지 (1F)', e:'☕', nameKo:'멤버십 라운지', nameEn:'Membership Lounge', descKo:'입주민 전용으로 커피음료와 간단한 디저트를 무료로 제공합니다. 푸른 식물로 가득한 힐링 공간.', descEn:'Residents-only space serving free coffee and desserts. A healing place filled with plants.'},
+    {label:'서비스 라운지 (1F)', e:'🍱', nameKo:'서비스 라운지', nameEn:'Service Lounge', descKo:'배달음식 픽업 및 식사 공간으로 이웃과 함께 교류할 수 있는 카페형 다이닝 라운지입니다.', descEn:'Pickup and dining space for delivery food. A café-style lounge for meeting neighbors.'},
+    {label:'엔터 라운지 (B1F)', e:'💪', nameKo:'엔터 라운지', nameEn:'Enter Lounge', descKo:'피트니스·시네마룸·PT룸이 한 층에. 운동부터 엔터테인먼트까지 활력 넘치는 B1층입니다.', descEn:'Fitness, Cinema Rooms, PT Rooms on one floor. An active basement for workouts and entertainment.'}
+  ];
+  $('amenity-editor').innerHTML = amenityDefs.map((a,i) => `
+    <div class="sub-title">${a.label}</div>
+    <div style="margin-bottom:18px;">
+      <div style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:8px;">📷 이미지 (최대 3장, 슬라이드로 표시됩니다)</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">${[0,1,2].map(j => mkMultiUploadCard('amenity', i, j, a.e, '4:3')).join('')}</div>
+      <div class="ltabs" role="group">
+        <button class="ltab active" data-langtab="ko" onclick="switchLangTab('amenity','ko',this);switchAmenityLang(${i},'ko',this)">🇰🇷 한국어</button>
+        <button class="ltab" data-langtab="en" onclick="switchLangTab('amenity','en',this);switchAmenityLang(${i},'en',this)">🇺🇸 English</button>
+      </div>
+      <div id="amenity-fields-${i}-ko">
+        <div class="fg">
+          <div class="fgrp"><label class="flbl">공간 이름 (한국어)</label><input class="finp" id="an${i}-ko" type="text" value="${a.nameKo}" oninput="mu()"></div>
+          <div class="fgrp"><label class="flbl">소개 문구 (한국어)</label><textarea class="ftxt" id="ad${i}-ko" oninput="mu()">${a.descKo}</textarea></div>
+        </div>
+      </div>
+      <div id="amenity-fields-${i}-en" style="display:none;">
+        <div class="fg">
+          <div class="fgrp"><label class="flbl">Space Name (English)</label><input class="finp" id="an${i}-en" type="text" value="${a.nameEn}" oninput="mu()"></div>
+          <div class="fgrp"><label class="flbl">Description (English)</label><textarea class="ftxt" id="ad${i}-en" oninput="mu()">${a.descEn}</textarea></div>
+        </div>
+      </div>
+    </div>${i<2?'<div class="pdiv"></div>':''}`).join('');
+
+  // Rooms - 룸마다 3장 + 인기★/만실 토글
+  const roomDefs = [
+    {l:'Rise Type', e:'🛏️', c:'#1B2E4D', k:'R'},
+    {l:'Cozy Type', e:'🛋️', c:'#2A5A30', k:'C'},
+    {l:'Studio Type', e:'🏠', c:'#8B3A20', k:'S'}
+  ];
+  $('rooms-upload-grid').innerHTML = `<div style="display:flex;flex-direction:column;gap:20px;">${roomDefs.map((r,i) => `
+    <div class="panel" style="overflow:hidden;margin-bottom:0;">
+      <div class="uc-head" style="background:var(--gray-50);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:8px;">
+        <div class="ucnum" style="background:${r.c}">${r.k}</div>
+        <strong style="font-size:14px;">${r.l}</strong>
+      </div>
+      <div style="padding:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:8px;">📷 이미지 (최대 3장)</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">${[0,1,2].map(j => mkMultiUploadCard('room', i, j, r.e, '4:3')).join('')}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--gray-50);border:1px solid var(--border);border-radius:8px;cursor:pointer;flex:1;min-width:160px;">
+            <input type="checkbox" id="popular-${i}" ${ROOM_STATE[i].popular?'checked':''} style="width:18px;height:18px;cursor:pointer;accent-color:var(--brand);">
+            <span style="font-size:13px;font-weight:600;">⭐ 인기 배지 표시</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--gray-50);border:1px solid var(--red-light);border-radius:8px;cursor:pointer;flex:1;min-width:160px;">
+            <input type="checkbox" id="soldout-${i}" ${ROOM_STATE[i].fullOccupied?'checked':''} style="width:18px;height:18px;cursor:pointer;accent-color:#EF4444;">
+            <span style="font-size:13px;font-weight:600;color:var(--red);">🔴 만실 표시</span>
+          </label>
+        </div>
+        <div id="soldout-note-${i}" style="margin-top:10px;padding:8px 12px;background:var(--red-light);border-radius:var(--r-sm);font-size:12px;color:var(--red);font-weight:600;display:${ROOM_STATE[i].fullOccupied?'block':'none'};">⚠️ 만실 상태: 웹페이지에서 해당 타입 계약 신청이 비활성화됩니다.</div>
+      </div>
+    </div>`).join('')}</div>`;
+
+  // Overview - 3장
+  $('overview-upload').innerHTML = `
+    <div style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:8px;">📷 이미지 (최대 3장, 슬라이드로 표시됩니다)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;">${[0,1,2].map(j => `
+      <div class="ucard">
+        <div class="uch"><div class="ucnum">${j+1}</div><div class="uclbl">사진 ${j+1}</div><div class="ucst st-d" id="up-s-overview_0_${j}">기본값</div></div>
+        <div class="uzone" id="up-z-overview_0_${j}" onclick="trig('up-fin-overview_0_${j}')" ondrop="dropM(event,'overview',0,${j})" ondragover="dov(event,'up-z-overview_0_${j}')" ondragleave="dl('up-z-overview_0_${j}')">
+          <div class="upr" id="up-p-overview_0_${j}"></div>
+          <div class="uov"><button class="uob uoc" onclick="event.stopPropagation();trig('up-fin-overview_0_${j}')">변경</button><button class="uob uod" onclick="event.stopPropagation();remM('overview',0,${j})">삭제</button></div>
+          <div class="uzi" id="up-i-overview_0_${j}">🏢</div>
+          <div class="uzt" id="up-t-overview_0_${j}">클릭 또는 드래그</div>
+          <div class="uzh">건물 외관 · 4:3 권장</div>
+        </div>
+        <input type="file" class="hf" id="up-fin-overview_0_${j}" accept="image/*" onchange="selM(event,'overview',0,${j})">
+      </div>`).join('')}
+    </div>`;
+}
+
+function switchAmenityLang(i, lang, btn){
+  // (다른 라운지 카드는 영향 안 받음)
+}
+
+// ── 업로드 함수 ──
+function trig(id){ $(id)?.click(); }
+function dov(e, zid){ e.preventDefault(); $(zid)?.classList.add('drag'); }
+function dl(zid){ $(zid)?.classList.remove('drag'); }
+
+function compress(file, cb){
+  const r = new FileReader();
+  r.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      const MAX = 2400;
+      let {width:w, height:h} = img;
+      if(w > MAX){ h = Math.round(h * MAX / w); w = MAX; }
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      cb(c.toDataURL('image/jpeg', 0.92));
+    };
+    img.onerror = () => showToast('❌ 이미지를 읽을 수 없습니다','err');
+    img.src = ev.target.result;
+  };
+  r.onerror = () => showToast('❌ 파일 읽기 실패','err');
+  r.readAsDataURL(file);
+}
+
+// Hero (단일)
+function sel(e, type, idx){
+  const f = e.target.files[0]; if(!f) return;
+  if(f.size > 20*1024*1024){ showToast('❌ 20MB 초과','err'); return; }
+  compress(f, src => storeHero(idx, src));
+  e.target.value = ''; // 동일 파일 재업로드 위해 초기화
+}
+function drop(e, type, idx){
+  e.preventDefault();
+  $(`up-z-hero-${idx}`)?.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if(!f || !f.type.startsWith('image/')){ showToast('❌ 이미지 파일만','err'); return; }
+  if(f.size > 20*1024*1024){ showToast('❌ 20MB 초과','err'); return; }
+  compress(f, src => storeHero(idx, src));
+}
+function storeHero(idx, src){
+  IMG.hero[idx] = src;
+  idbPut('hero-' + idx, src);
+  setPv('hero', idx, src);
+  mu();
+  localStorage.setItem('gwellImagesTs', Date.now().toString());
+}
+function getIds(type, idx){
+  return {p:`up-p-${type}-${idx}`, z:`up-z-${type}-${idx}`, s:`up-s-${type}-${idx}`, ic:`up-i-${type}-${idx}`, tx:`up-t-${type}-${idx}`};
+}
+function setPv(type, idx, src){ setPvById(getIds(type, idx), src); }
+function setPvById(ids, src){
+  const p = $(ids.p); if(p){ p.style.backgroundImage = `url(${src})`; p.style.backgroundSize='cover'; p.style.backgroundPosition='center'; }
+  const z = $(ids.z); if(z) z.classList.add('has');
+  const ic = $(ids.ic); const tx = $(ids.tx);
+  if(ic) ic.style.display = 'none';
+  if(tx) tx.style.display = 'none';
+  const s = $(ids.s); if(s){ s.textContent = '✓ 업로드됨'; s.className = 'ucst st-u'; }
+}
+function rem(type, idx){
+  if(!confirm('이미지를 삭제하시겠습니까?')) return;
+  IMG.hero[idx] = null;
+  idbDel('hero-' + idx);
+  const ids = getIds(type, idx);
+  const p = $(ids.p); if(p) p.style.backgroundImage = '';
+  const z = $(ids.z); if(z) z.classList.remove('has');
+  const ic = $(ids.ic); const tx = $(ids.tx);
+  if(ic) ic.style.display = '';
+  if(tx) tx.style.display = '';
+  const s = $(ids.s); if(s){ s.textContent = '기본값'; s.className = 'ucst st-d'; }
+  mu();
+  localStorage.setItem('gwellImagesTs', Date.now().toString());
+}
+
+// Multi (amenity/room/overview)
+function selM(e, type, itemIdx, imgIdx){
+  const f = e.target.files[0]; if(!f) return;
+  if(f.size > 20*1024*1024){ showToast('❌ 20MB 초과','err'); return; }
+  compress(f, src => storeM(type, itemIdx, imgIdx, src));
+  e.target.value = '';
+}
+function dropM(e, type, itemIdx, imgIdx){
+  e.preventDefault();
+  $(`up-z-${type}_${itemIdx}_${imgIdx}`)?.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if(!f || !f.type.startsWith('image/')){ showToast('❌ 이미지 파일만','err'); return; }
+  if(f.size > 20*1024*1024){ showToast('❌ 20MB 초과','err'); return; }
+  compress(f, src => storeM(type, itemIdx, imgIdx, src));
+}
+function storeM(type, itemIdx, imgIdx, src){
+  if(type === 'amenity') IMG.amenity[itemIdx][imgIdx] = src;
+  else if(type === 'room') IMG.room[itemIdx][imgIdx] = src;
+  else IMG.overview[imgIdx] = src;
+  const idbKey = (type === 'overview') ? `overview-0-${imgIdx}` : `${type}-${itemIdx}-${imgIdx}`;
+  idbPut(idbKey, src);
+  setPvM(type, itemIdx, imgIdx, src);
+  mu();
+  localStorage.setItem('gwellImagesTs', Date.now().toString());
+}
+function setPvM(type, itemIdx, imgIdx, src){
+  const key = `${type}_${itemIdx}_${imgIdx}`;
+  const p = $(`up-p-${key}`); if(p){ p.style.backgroundImage = `url(${src})`; p.style.backgroundSize='cover'; p.style.backgroundPosition='center'; }
+  const z = $(`up-z-${key}`); if(z) z.classList.add('has');
+  const ic = $(`up-i-${key}`); const tx = $(`up-t-${key}`);
+  if(ic) ic.style.display = 'none';
+  if(tx) tx.style.display = 'none';
+  const s = $(`up-s-${key}`); if(s){ s.textContent = '✓'; s.className = 'ucst st-u'; }
+}
+function remM(type, itemIdx, imgIdx){
+  if(!confirm('이미지를 삭제하시겠습니까?')) return;
+  if(type === 'amenity') IMG.amenity[itemIdx][imgIdx] = null;
+  else if(type === 'room') IMG.room[itemIdx][imgIdx] = null;
+  else IMG.overview[imgIdx] = null;
+  const idbKey = (type === 'overview') ? `overview-0-${imgIdx}` : `${type}-${itemIdx}-${imgIdx}`;
+  idbDel(idbKey);
+  const key = `${type}_${itemIdx}_${imgIdx}`;
+  const p = $(`up-p-${key}`); if(p) p.style.backgroundImage = '';
+  const z = $(`up-z-${key}`); if(z) z.classList.remove('has');
+  const ic = $(`up-i-${key}`); const tx = $(`up-t-${key}`);
+  if(ic) ic.style.display = '';
+  if(tx) tx.style.display = '';
+  const s = $(`up-s-${key}`); if(s){ s.textContent = '기본'; s.className = 'ucst st-d'; }
+  mu();
+  localStorage.setItem('gwellImagesTs', Date.now().toString());
+}
+
+/* ══════════════════════════════════════════
+   FAQ (KO + EN)
+═══════════════════════════════════════════ */
+const FAQ_DEFAULTS = {
+  ko:{
+    contract:[
+      {q:'계약 기간은 어떻게 되나요?', a:'단기(3·6개월)와 장기(12개월)를 선택할 수 있습니다. 단기계약은 3개월 +10만원, 6개월 +5만원의 추가 요금이 발생합니다.'},
+      {q:'보증금은 얼마인가요?', a:'Rise·Cozy 타입은 단기 300만원 / 장기 500만원, Studio 타입은 단기·장기 모두 500만원입니다.'},
+      {q:'계약 절차는 어떻게 되나요?', a:'① 계약 신청 → ② 계약 승인 및 계약금 안내 → ③ 계약금 입금 → ④ 전자계약서 서명 완료'},
+      {q:'전입신고가 가능한가요?', a:'도시형생활주택(104호실)은 전입신고 가능합니다. 오피스텔(26호실)은 개별 문의 부탁드립니다.'},
+      {q:'중도 해지가 가능한가요?', a:'가능하지만 위약금이 발생할 수 있습니다.'}
+    ],
+    life:[
+      {q:'커뮤니티 시설은 무료로 이용할 수 있나요?', a:'멤버십 라운지(커피 포함), 피트니스는 무료입니다. 시네마룸·PT룸은 예약제로 운영됩니다.'},
+      {q:'입주민 앱은 어떻게 사용하나요?', a:'커뮤니티 시설 예약, 관리비 납부, 이웃 소통이 가능합니다. IOT 도어락도 앱에서 제어됩니다.'},
+      {q:'관리비에는 무엇이 포함되나요?', a:'기본 관리비 + 인터넷 + IOT 도어락 이용료가 포함됩니다. 전기·수도는 별도 부과됩니다.'}
+    ],
+    room:[
+      {q:'룸에 어떤 가구·가전이 제공되나요?', a:'침대, 수납장, 블라인드, TV, 전자렌지, 냉장고, 세탁기, 에어컨, 인터넷이 기본 제공됩니다.'},
+      {q:'타입별 차이는 무엇인가요?', a:'Rise는 책상 중심 홈오피스형, Cozy는 창가 부스소파 휴식형, Studio는 6.9PY 오픈형입니다.'},
+      {q:'테라스 타입은 어떤 호실인가요?', a:'2층 일부 호실(201, 202호)의 Cozy·Studio Terrace 타입입니다. 자세한 내용은 이메일로 문의해 주세요.'}
+    ]
+  },
+  en:{
+    contract:[
+      {q:'How long can I lease for?', a:'Choose between short-term (3 or 6 months) and long-term (12 months). Short-term has a surcharge: 3-month +₩100K, 6-month +₩50K.'},
+      {q:'How much is the deposit?', a:'Rise · Cozy: ₩3M (short) / ₩5M (long). Studio: ₩5M regardless of term.'},
+      {q:'How does the application process work?', a:'① Submit application → ② Approval & deposit info → ③ Deposit payment → ④ E-signature. Everything online.'},
+      {q:'Can I register my residence?', a:'Yes for Urban Lifestyle Housing units (104 rooms). For officetel units (26 rooms), please inquire individually.'},
+      {q:'Can I terminate early?', a:'Yes, but a penalty may apply.'}
+    ],
+    life:[
+      {q:'Are community facilities free?', a:'Membership Lounge (free coffee), Fitness are free. Cinema Room & PT Room operate by reservation.'},
+      {q:'How do I use the resident app?', a:'Book community facilities, pay management fees, connect with neighbors. You can also control your IoT lock.'},
+      {q:"What's included in the management fee?", a:'Basic management + Internet + IoT door lock. Electricity & water billed separately.'}
+    ],
+    room:[
+      {q:'What furniture is provided?', a:'Bed, cabinet, blinds, TV, microwave, fridge, washer, AC, internet — all included.'},
+      {q:"What's the difference between types?", a:'Rise is a desk-centered home-office type, Cozy has a window-side booth sofa, Studio is a larger 22.8㎡ open studio.'},
+      {q:'Which units have terraces?', a:'Selected 2nd-floor units (201, 202) have Cozy/Studio Terrace. Please email us for details.'}
+    ]
+  }
+};
+const FAQST = {
+  ko: JSON.parse(JSON.stringify(FAQ_DEFAULTS.ko)),
+  en: JSON.parse(JSON.stringify(FAQ_DEFAULTS.en))
+};
+
+function switchFaqCat(cat, btn){
+  document.querySelectorAll('.fct').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.fpanel').forEach(p => p.classList.remove('active'));
+  $('faqp-' + cat).classList.add('active');
+}
+function renderFaq(cat){
+  const el = $('faql-' + cat); if(!el) return;
+  const data = FAQST[currentFaqLang][cat] || [];
+  const placeholderQ = currentFaqLang === 'en' ? 'Question' : '질문';
+  const labelQ = currentFaqLang === 'en' ? 'Question' : '질문';
+  const labelA = currentFaqLang === 'en' ? 'Answer' : '답변';
+  el.innerHTML = data.map((item, i) => `<div class="frow">
+    <div class="frow-num">Q${i+1} <button class="fdel" onclick="delFaq('${cat}',${i})" aria-label="삭제">×</button></div>
+    <div class="fgrp" style="margin-bottom:8px"><label class="flbl">${labelQ}</label><input class="finp" type="text" value="${escHtml(item.q)}" oninput="mu();FAQST['${currentFaqLang}']['${cat}'][${i}].q=this.value" placeholder="${placeholderQ}"></div>
+    <div class="fgrp"><label class="flbl">${labelA}</label><textarea class="ftxt" oninput="mu();FAQST['${currentFaqLang}']['${cat}'][${i}].a=this.value" rows="2">${escHtml(item.a)}</textarea></div>
+  </div>`).join('');
+}
+function addFaq(cat){
+  FAQST[currentFaqLang][cat].push({q:'', a:''});
+  renderFaq(cat);
+  mu();
+}
+function delFaq(cat, idx){
+  if(!confirm('삭제하시겠습니까?')) return;
+  FAQST[currentFaqLang][cat].splice(idx, 1);
+  renderFaq(cat);
+  mu();
+}
+
+/* ══════════════════════════════════════════
+   SAVE / LOAD (Content)
+═══════════════════════════════════════════ */
+function collectI18nOverrides(){
+  // 어드민에서 입력한 i18n 영문 텍스트를 i18n.en으로 모음
+  const heroTitleEn = $('hero-title-en')?.value;
+  const heroDescEn = $('hero-desc-en')?.value;
+  const heroTitleKo = $('hero-title-ko')?.value;
+  const heroDescKo = $('hero-desc-ko')?.value;
+  const i18n = {
+    ko:{},
+    en:{}
+  };
+  // hero (개행 → <br>)
+  const toHtml = s => (s || '').replace(/\n/g, '<br>');
+  if(heroTitleKo) i18n.ko['hero.title'] = toHtml(heroTitleKo);
+  if(heroDescKo) i18n.ko['hero.desc'] = toHtml(heroDescKo);
+  if(heroTitleEn) i18n.en['hero.title'] = toHtml(heroTitleEn);
+  if(heroDescEn) i18n.en['hero.desc'] = toHtml(heroDescEn);
+  // amenity (이름/설명)
+  [0,1,2].forEach(i => {
+    const nKo = $('an'+i+'-ko')?.value; const dKo = $('ad'+i+'-ko')?.value;
+    const nEn = $('an'+i+'-en')?.value; const dEn = $('ad'+i+'-en')?.value;
+    // amenity-name-N, amenity-desc-N 형식의 직접 텍스트는 ko/en별로 i18n에 저장
+    // 메인페이지는 amenity-name-N, amenity-desc-N에 i18n override를 자동 적용
+    if(nKo) i18n.ko[`amenity.name.${i}`] = nKo;
+    if(dKo) i18n.ko[`amenity.desc.${i}`] = dKo;
+    if(nEn) i18n.en[`amenity.name.${i}`] = nEn;
+    if(dEn) i18n.en[`amenity.desc.${i}`] = dEn;
+  });
+  return i18n;
+}
+
+function saveAll(){
+  // amenity의 ko값을 default로 전송 (메인 페이지가 한국어 모드일 때 표시)
+  // 프로모션도 같이 저장 (gwellSettings에 들어가지만 호환성)
+  savePromo(true); // silent 모드
+  const data = {
+    hero:{title: ($('hero-title-ko')?.value || '').replace(/\n/g,'<br>'), desc: ($('hero-desc-ko')?.value || '').replace(/\n/g,'<br>')},
+    amenity:[0,1,2].map(i => ({name: $('an'+i+'-ko')?.value || '', desc: $('ad'+i+'-ko')?.value || ''})),
+    rooms:[0,1,2].map(i => ({
+      popular: !!$('popular-'+i)?.checked,
+      fullOccupied: !!$('soldout-'+i)?.checked
+    })),
+    roomsNotice: $('notice-text')?.value,
+    location:{
+      transit:[
+        {name: $('tr-name-0')?.value, sub: $('tr-sub-0')?.value, time: $('tr-time-0')?.value},
+        {name: $('tr-name-1')?.value, sub: $('tr-sub-1')?.value, time: $('tr-time-1')?.value}
+      ],
+      website: $('loc-web')?.value,
+      email: $('loc-email')?.value
+    },
+    faq: FAQST.ko,
+    faqEn: FAQST.en,
+    stats:[0,1,2,3,4].map(i => ({num: $('stat-n-'+i)?.value || '', label: $('stat-l-'+i)?.value || ''})),
+    i18n: collectI18nOverrides()
+  };
+  try {
+    localStorage.setItem('gwellContent', JSON.stringify(data));
+    // Firestore에 저장 → 메인 페이지가 실시간으로 받아감
+    if(window.GwellDB){
+      window.GwellDB.saveContent(data).then(() => {
+        unsaved = false;
+        $('unsavedDot').classList.remove('show');
+        $('saveBadge').classList.add('show');
+        setTimeout(()=>$('saveBadge').classList.remove('show'), 3000);
+        showToast('✓ 저장 완료! 사이트에 즉시 반영됩니다', 'ok');
+      }).catch(err => {
+        showToast('⚠️ 로컬에만 저장됨: ' + err.message, 'err');
+      });
+    } else {
+      unsaved = false;
+      $('unsavedDot').classList.remove('show');
+      showToast('✓ 로컬 저장 완료 (DB 연결 대기 중)', 'ok');
+    }
+  } catch(e){ showToast('❌ 저장 실패: ' + e.message, 'err'); }
+}
+
+function loadSaved(){
+  try {
+    const raw = localStorage.getItem('gwellContent');
+    if(!raw){ ['contract','life','room'].forEach(cat => renderFaq(cat)); return; }
+    const d = JSON.parse(raw);
+    // hero (한국어)
+    if(d.hero){
+      if(d.hero.title && $('hero-title-ko')) $('hero-title-ko').value = d.hero.title.replace(/<br\s*\/?>/g, '\n');
+      if(d.hero.desc && $('hero-desc-ko')) $('hero-desc-ko').value = d.hero.desc.replace(/<br\s*\/?>/g, '\n');
+    }
+    // i18n EN
+    if(d.i18n && d.i18n.en){
+      const en = d.i18n.en;
+      if(en['hero.title'] && $('hero-title-en')) $('hero-title-en').value = en['hero.title'].replace(/<br\s*\/?>/g, '\n');
+      if(en['hero.desc'] && $('hero-desc-en')) $('hero-desc-en').value = en['hero.desc'].replace(/<br\s*\/?>/g, '\n');
+      [0,1,2].forEach(i => {
+        if(en[`amenity.name.${i}`] && $('an'+i+'-en')) $('an'+i+'-en').value = en[`amenity.name.${i}`];
+        if(en[`amenity.desc.${i}`] && $('ad'+i+'-en')) $('ad'+i+'-en').value = en[`amenity.desc.${i}`];
+      });
+    }
+    // amenity (한국어 기본)
+    if(d.amenity) d.amenity.forEach((a,i) => {
+      if(a.name && $('an'+i+'-ko')) $('an'+i+'-ko').value = a.name;
+      if(a.desc && $('ad'+i+'-ko')) $('ad'+i+'-ko').value = a.desc;
+    });
+    // rooms 상태
+    if(d.rooms) d.rooms.forEach((r,i) => {
+      if(typeof r.popular !== 'undefined') ROOM_STATE[i].popular = r.popular;
+      if(typeof r.fullOccupied !== 'undefined') ROOM_STATE[i].fullOccupied = r.fullOccupied;
+      const pop = $('popular-'+i); if(pop) pop.checked = ROOM_STATE[i].popular;
+      const sold = $('soldout-'+i); if(sold) sold.checked = ROOM_STATE[i].fullOccupied;
+      const note = $('soldout-note-'+i); if(note) note.style.display = ROOM_STATE[i].fullOccupied ? 'block' : 'none';
+    });
+    // notice
+    if(d.roomsNotice && $('notice-text')){ $('notice-text').value = d.roomsNotice; $('notice-preview').innerHTML = d.roomsNotice; }
+    // location
+    if(d.location){
+      (d.location.transit || []).forEach((tr,i) => {
+        if($('tr-name-'+i)) $('tr-name-'+i).value = tr.name || '';
+        if($('tr-sub-'+i)) $('tr-sub-'+i).value = tr.sub || '';
+        if($('tr-time-'+i)) $('tr-time-'+i).value = tr.time || '';
+      });
+      if(d.location.website && $('loc-web')) $('loc-web').value = d.location.website;
+      if(d.location.email && $('loc-email')) $('loc-email').value = d.location.email;
+    }
+    // FAQ
+    if(d.faq){ ['contract','life','room'].forEach(cat => { if(d.faq[cat]?.length) FAQST.ko[cat] = d.faq[cat]; }); }
+    if(d.faqEn){ ['contract','life','room'].forEach(cat => { if(d.faqEn[cat]?.length) FAQST.en[cat] = d.faqEn[cat]; }); }
+    // stats
+    if(d.stats) d.stats.forEach((s,i) => {
+      if($('stat-n-'+i) && s.num !== undefined) $('stat-n-'+i).value = s.num;
+      if($('stat-l-'+i) && s.label !== undefined) $('stat-l-'+i).value = s.label;
+    });
+  } catch(e){ console.warn('로드 실패:', e); }
+  ['contract','life','room'].forEach(cat => renderFaq(cat));
+  attachRoomToggles();
+}
+
+function resetAll(){
+  if(!confirm('모든 변경사항(이미지·텍스트·설정)을 초기화하시겠습니까?\n\n신청 내역과 알림 설정은 유지됩니다.')) return;
+  idbClear(function(){
+    localStorage.removeItem('gwellContent');
+    localStorage.removeItem('gwellDataVersion');
+    localStorage.removeItem('gwellColors');
+    location.reload();
+  });
+}
+
+/* ══════════════════════════════════════════
+   SETTINGS (Webhook, Email, Kakao, WhatsApp, USD)
+═══════════════════════════════════════════ */
+function getSettings(){
+  try { return JSON.parse(localStorage.getItem('gwellSettings') || '{}'); }
+  catch(e){ return {}; }
+}
+function loadSettingsForm(){
+  const s = getSettings();
+  if($('set-webhook')) $('set-webhook').value = s.webhookUrl || '';
+  if($('set-email')) $('set-email').value = s.notifyEmail || 'lifegangdong@sl-platform.com';
+  if($('set-kakao')) $('set-kakao').value = s.kakaoUrl || '';
+  if($('set-whatsapp')) $('set-whatsapp').value = s.whatsappUrl || '';
+  if($('set-usd')) $('set-usd').value = s.usdRate || 1340;
+  if($('set-pw')) $('set-pw').value = '';
+}
+function saveSettings(){
+  const cur = getSettings();
+  const newPw = $('set-pw')?.value.trim();
+  const settings = {
+    ...cur,
+    webhookUrl: $('set-webhook')?.value.trim() || '',
+    notifyEmail: $('set-email')?.value.trim() || 'lifegangdong@sl-platform.com',
+    kakaoUrl: $('set-kakao')?.value.trim() || '',
+    whatsappUrl: $('set-whatsapp')?.value.trim() || '',
+    usdRate: parseInt($('set-usd')?.value || 1340) || 1340
+  };
+  if(newPw){
+    if(newPw.length < 4){ showToast('❌ 비밀번호는 최소 4자 이상','err'); return; }
+    settings.adminPw = newPw;
+  }
+  // 이메일 검증
+  if(settings.notifyEmail && !/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(settings.notifyEmail)){
+    showToast('❌ 올바른 이메일 형식이 아닙니다','err'); return;
+  }
+  // URL 검증
+  for(const k of ['webhookUrl','kakaoUrl','whatsappUrl']){
+    if(settings[k] && !/^https?:\/\//.test(settings[k])){
+      showToast('❌ URL은 http:// 또는 https://로 시작해야 합니다','err'); return;
+    }
+  }
+  localStorage.setItem('gwellSettings', JSON.stringify(settings));
+  // Firestore에도 저장 → 메인 페이지 실시간 반영
+  if(window.GwellDB){
+    // adminPw는 Firestore에 보내지 않음 (Firebase Auth가 처리)
+    const forSync = {...settings};
+    delete forSync.adminPw;
+    window.GwellDB.saveSiteSettings(forSync).catch(err => console.warn('설정 동기화 실패:', err));
+  }
+  unsaved = false;
+  $('unsavedDot').classList.remove('show');
+  if(newPw) showToast('✓ 알림 설정 + 비밀번호 저장 완료 (⚠️ 비밀번호는 Firebase 콘솔에서 변경 권장)', 'ok');
+  else showToast('✓ 알림 설정 저장 완료', 'ok');
+  if($('set-pw')) $('set-pw').value = '';
+  checkWebhookWarn();
+}
+function checkWebhookWarn(){
+  const s = getSettings();
+  const hasWebhook = !!s.webhookUrl;
+  const hasEmail = !!s.notifyEmail;
+  const warn = $('webhook-warn');
+  if(warn) warn.style.display = (!hasWebhook && hasEmail) ? 'flex' : (!hasWebhook && !hasEmail) ? 'flex' : 'none';
+}
+
+/* ══════════════════════════════════════════
+   APPLICATIONS (Firestore 실시간 구독)
+═══════════════════════════════════════════ */
+let _CACHED_APPS = [];
+let _CACHED_VISITS = {};
+
+function getApps(){ return _CACHED_APPS; }
+
+function renderStats(){
+  const apps = getApps();
+  const today = new Date().toISOString().slice(0,10);
+  const newCount = apps.filter(a => a.status === '신청확인').length;
+  const todayVisitors = _CACHED_VISITS[today] || 0;
+  $('stat-total').textContent = apps.length;
+  $('stat-tour').textContent = apps.filter(a => a.type === 'tour').length;
+  $('stat-contract').textContent = apps.filter(a => a.type === 'contract').length;
+  $('stat-new').textContent = newCount;
+  if($('stat-visitors')) $('stat-visitors').textContent = todayVisitors;
+  $('new-count').textContent = newCount;
+  $('new-count').style.display = newCount > 0 ? '' : 'none';
+}
+
+function updateStatus(appId, newStatus){
+  // 낙관적 UI 업데이트
+  const app = _CACHED_APPS.find(a => a.id === appId);
+  if(app){ app.status = newStatus; renderStats(); }
+  const sel = document.querySelector(`[data-app-id="${appId}"]`);
+  if(sel) sel.className = 'status-sel ' + (STATUS_CLASS[newStatus] || '');
+  // Firestore 반영
+  if(window.GwellDB) window.GwellDB.updateApplicationStatus(appId, newStatus).catch(err => {
+    console.error('상태 업데이트 실패:', err);
+    showToast('❌ 상태 변경 실패', 'err');
+  });
+}
+
+function deleteApp(appId){
+  if(!confirm('이 신청을 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.')) return;
+  // Firestore에서 삭제
+  if(window.GwellDB) window.GwellDB.deleteApplication(appId).then(() => {
+    showToast('🗑 신청 삭제됨', 'ok');
+    closeDayModal();
+  }).catch(err => {
+    console.error('삭제 실패:', err);
+    showToast('❌ 삭제 실패', 'err');
+  });
+}
+
+function mkAppRow(app){
+  const dt = new Date(app.createdAt);
+  const dtStr = `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+  const typeBadge = app.type === 'tour' ? '<span class="type-badge tb-tour">🏠 투어</span>' : '<span class="type-badge tb-contract">📝 계약</span>';
+  const langBadge = app.lang === 'en' ? '<span class="lang-badge">EN</span>' : '';
+  const stClass = STATUS_CLASS[app.status] || 'st-신청확인';
+  const statusSel = `<select class="status-sel ${stClass}" data-app-id="${app.id}" onchange="updateStatus('${app.id}',this.value)">${STATUS_OPTS.map(s => `<option value="${s}" ${app.status===s?'selected':''}>${s}</option>`).join('')}</select>`;
+  const info = app.type === 'tour' ? `${app.roomType || ''} · ${app.time || ''}` : `${app.roomType || ''} · ${app.period || ''}`;
+  const phoneLink = app.phone ? `<a href="tel:${escHtml(app.phone)}" style="color:var(--gray-600);text-decoration:none;">${escHtml(app.phone)}</a>` : '';
+  const emailLink = app.email ? `<a href="mailto:${escHtml(app.email)}" style="color:var(--gray-600);text-decoration:none;">${escHtml(app.email)}</a>` : '-';
+  return `<tr>
+    <td>${typeBadge}${langBadge}</td>
+    <td><div class="app-name">${escHtml(app.name || '')}</div><div class="app-date">${phoneLink}</div></td>
+    <td>${emailLink}</td>
+    <td>${escHtml(info)}</td>
+    <td><div class="app-name">${escHtml(app.date || '-')}</div></td>
+    <td>${statusSel}</td>
+    <td><div class="app-date">${dtStr}</div></td>
+    <td><button class="row-action-btn del" onclick="deleteApp('${app.id}')" title="삭제">×</button></td>
+  </tr>`;
+}
+
+function mkListPanel(apps, containerId){
+  const el = $(containerId); if(!el) return;
+  if(!apps.length){
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-txt">신청 내역이 없습니다</div></div>';
+    return;
+  }
+  el.innerHTML = `<div class="panel"><div class="ph"><div class="ph-title">신청 목록 (${apps.length}건)</div><div style="display:flex;gap:8px;"><button class="dl-btn" onclick="downloadCSV('${containerId}')">📥 엑셀(CSV) 다운로드</button></div></div><div style="overflow-x:auto;"><div class="app-table-wrap"><table class="app-tbl"><thead><tr><th>유형</th><th>이름·연락처</th><th>이메일</th><th>룸·기간</th><th>희망일</th><th>상태</th><th>접수일시</th><th></th></tr></thead><tbody>${apps.map(mkAppRow).join('')}</tbody></table></div></div></div>`;
+}
+
+function renderAllLists(){
+  const apps = getApps().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  mkListPanel(apps, 'list-all');
+  mkListPanel(apps.filter(a => a.type === 'tour'), 'list-tour');
+  mkListPanel(apps.filter(a => a.type === 'contract'), 'list-contract');
+}
+
+function switchAppsTab(id, btn){
+  document.querySelectorAll('.apps-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.apps-panel').forEach(p => p.classList.remove('active'));
+  $('apanel-' + id).classList.add('active');
+  if(id !== 'dashboard') renderAllLists();
+}
+
+function downloadDateStats(){
+  const apps = getApps();
+  const visits = _CACHED_VISITS;
+  const allDates = new Set([
+    ...Object.keys(visits),
+    ...apps.map(a => a.createdAt?.slice(0,10)).filter(Boolean)
+  ]);
+  const sortedDates = [...allDates].sort();
+  const headers = ['날짜','방문자 수','투어 신청 수','계약 신청 수','전체 신청 수'];
+  const rows = sortedDates.map(date => {
+    const dayApps = apps.filter(a => a.createdAt?.startsWith(date));
+    return [date, visits[date] || 0, dayApps.filter(a => a.type === 'tour').length, dayApps.filter(a => a.type === 'contract').length, dayApps.length];
+  });
+  rows.push(['합계', Object.values(visits).reduce((a,b) => a+b, 0), apps.filter(a => a.type === 'tour').length, apps.filter(a => a.type === 'contract').length, apps.length]);
+  const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `지웰홈스_날짜별통계_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📊 날짜별 통계 다운로드 완료', 'ok');
+}
+
+function downloadCSV(listId){
+  const apps = getApps().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const filtered = listId === 'list-tour' ? apps.filter(a => a.type === 'tour') : listId === 'list-contract' ? apps.filter(a => a.type === 'contract') : apps;
+  const headers = ['유형','이름','연락처','이메일','룸타입','기간/시간','희망일','호실','문의사항','상태','언어','접수일시'];
+  const rows = filtered.map(a => [
+    a.type === 'tour' ? '투어신청' : '계약신청',
+    a.name || '', a.phone || '', a.email || '',
+    a.roomType || '', a.type === 'tour' ? (a.time || '') : (a.period || ''),
+    a.date || '', a.roomNo || '', a.note || '',
+    a.status || '', a.lang === 'en' ? 'EN' : 'KO',
+    new Date(a.createdAt).toLocaleString('ko-KR')
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `지웰홈스_신청목록_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ 엑셀(CSV) 다운로드 완료', 'ok');
+}
+
+/* ══════════════════════════════════════════
+   CALENDAR
+═══════════════════════════════════════════ */
+let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
+function changeMonth(dir){
+  if(dir === 0){ calYear = new Date().getFullYear(); calMonth = new Date().getMonth(); }
+  else { calMonth += dir; if(calMonth > 11){ calMonth = 0; calYear++; } else if(calMonth < 0){ calMonth = 11; calYear--; } }
+  renderCalendar();
+}
+function renderCalendar(){
+  const apps = getApps();
+  const visits = _CACHED_VISITS;
+  const today = new Date();
+  $('cal-title').textContent = `${calYear}년 ${calMonth+1}월`;
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const lastDate = new Date(calYear, calMonth+1, 0).getDate();
+  const prevLastDate = new Date(calYear, calMonth, 0).getDate();
+  let html = '', day = 1, nextDay = 1;
+  for(let i = 0; i < 42; i++){
+    let dateStr = '', isThis = true, isToday = false;
+    if(i < firstDay){
+      const d = prevLastDate - firstDay + i + 1;
+      const prevMonth = calMonth === 0 ? 12 : calMonth;
+      const prevYear = calMonth === 0 ? calYear - 1 : calYear;
+      dateStr = `${prevYear}-${String(prevMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      isThis = false;
+    } else if(day > lastDate){
+      const nextMonth = calMonth + 2 > 12 ? 1 : calMonth + 2;
+      const nextYear = calMonth + 2 > 12 ? calYear + 1 : calYear;
+      dateStr = `${nextYear}-${String(nextMonth).padStart(2,'0')}-${String(nextDay).padStart(2,'0')}`;
+      nextDay++;
+      isThis = false;
+    } else {
+      dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      isToday = today.getFullYear() === calYear && today.getMonth() === calMonth && today.getDate() === day;
+      day++;
+    }
+    const dayApps = apps.filter(a => a.createdAt?.startsWith(dateStr));
+    const tCount = dayApps.filter(a => a.type === 'tour').length;
+    const cCount = dayApps.filter(a => a.type === 'contract').length;
+    const vCount = visits[dateStr] || 0;
+    const hasAny = tCount > 0 || cCount > 0 || vCount > 0;
+    const cls = ['cal-cell', isToday ? 'today' : '', !isThis ? 'other-month' : '', hasAny ? 'has-apps' : ''].filter(Boolean).join(' ');
+    const dayNumRaw = parseInt(dateStr.slice(-2), 10);
+    const dayNum = isThis ? (isToday ? `<span style="background:var(--brand);color:white;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center">${dayNumRaw}</span>` : `<span>${dayNumRaw}</span>`) : dayNumRaw;
+    html += `<div class="${cls}" onclick="${hasAny ? `openDayModal('${dateStr}')` : ''}">`
+      + `<div class="cal-day">${dayNum}</div>`
+      + (vCount ? `<span class="cal-chip cc-visitor">방문 ${vCount}명</span>` : '')
+      + (tCount ? `<span class="cal-chip cc-tour">투어 ${tCount}건</span>` : '')
+      + (cCount ? `<span class="cal-chip cc-contract">계약 ${cCount}건</span>` : '')
+      + `</div>`;
+  }
+  $('cal-body').innerHTML = html;
+}
+function openDayModal(dateStr){
+  const apps = getApps().filter(a => a.createdAt?.startsWith(dateStr));
+  const d = new Date(dateStr + 'T00:00:00');
+  $('day-modal-title').textContent = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 신청 (${apps.length}건)`;
+  $('day-modal-body').innerHTML = apps.length ? apps.map(a => `<div style="padding:14px 0;border-bottom:1px solid var(--border);">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+      ${a.type === 'tour' ? '<span class="type-badge tb-tour">🏠 투어</span>' : '<span class="type-badge tb-contract">📝 계약</span>'}
+      ${a.lang === 'en' ? '<span class="lang-badge">EN</span>' : ''}
+      <strong>${escHtml(a.name || '')}</strong>
+      <a href="tel:${escHtml(a.phone||'')}" style="font-size:12px;color:var(--gray-400);text-decoration:none;">${escHtml(a.phone || '')}</a>
+    </div>
+    <div style="font-size:13px;color:var(--gray-600);">${escHtml(a.roomType || '')} ${a.type === 'tour' ? '· ' + escHtml(a.time || '') : '· ' + escHtml(a.period || '')}</div>
+    ${a.email ? `<div style="font-size:12px;color:var(--gray-400);margin-top:4px;"><a href="mailto:${escHtml(a.email)}" style="color:var(--gray-400);text-decoration:underline;">${escHtml(a.email)}</a></div>` : ''}
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+      <select class="status-sel ${STATUS_CLASS[a.status] || ''}" data-app-id="${a.id}" onchange="updateStatus('${a.id}',this.value)">${STATUS_OPTS.map(s => `<option value="${s}" ${a.status===s?'selected':''}>${s}</option>`).join('')}</select>
+      <button class="row-action-btn del" onclick="deleteApp('${a.id}')">삭제</button>
+    </div>
+  </div>`).join('') : '<p style="color:var(--gray-400);font-size:14px;">신청 내역이 없습니다.</p>';
+  $('day-modal').classList.add('open');
+}
+function closeDayModal(){ $('day-modal').classList.remove('open'); }
+
+/* ══════════════════════════════════════════
+   PROMO POPUP EDITOR
+═══════════════════════════════════════════ */
+let promoImageData = null;
+
+function switchPromoLang(lang, btn){
+  const parent = btn.closest('.panel');
+  parent.querySelectorAll('.ltab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  $('promo-ko').style.display = lang === 'ko' ? '' : 'none';
+  $('promo-en').style.display = lang === 'en' ? '' : 'none';
+}
+
+function updateCtaUrlVisibility(){
+  const action = $('promo-cta-action')?.value;
+  if($('promo-cta-url-wrap')) $('promo-cta-url-wrap').style.display = action === 'url' ? '' : 'none';
+}
+
+function updatePromoStatus(){
+  const enabled = $('promo-enabled')?.checked;
+  const label = $('promo-status-label');
+  if(!label) return;
+  if(enabled){
+    label.textContent = '✓ 활성 (홈페이지에 표시됨)';
+    label.style.background = 'var(--green-light)';
+    label.style.color = 'var(--green)';
+  } else {
+    label.textContent = '비활성';
+    label.style.background = 'var(--gray-100)';
+    label.style.color = 'var(--gray-400)';
+  }
+}
+
+function selPromo(e){
+  const f = e.target.files[0]; if(!f) return;
+  if(f.size > 20*1024*1024){ showToast('❌ 20MB 초과','err'); return; }
+  compress(f, src => storePromoImg(src));
+  e.target.value = '';
+}
+function dropPromo(e){
+  e.preventDefault();
+  $('up-z-promo')?.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if(!f || !f.type.startsWith('image/')){ showToast('❌ 이미지 파일만','err'); return; }
+  if(f.size > 20*1024*1024){ showToast('❌ 20MB 초과','err'); return; }
+  compress(f, src => storePromoImg(src));
+}
+function storePromoImg(src){
+  promoImageData = src;
+  idbPut('promo-image', src);
+  const p = $('up-p-promo'); if(p){ p.style.backgroundImage = `url(${src})`; p.style.backgroundSize='cover'; p.style.backgroundPosition='center'; }
+  const z = $('up-z-promo'); if(z) z.classList.add('has');
+  const ic = $('up-i-promo'); const tx = $('up-t-promo');
+  if(ic) ic.style.display = 'none';
+  if(tx) tx.style.display = 'none';
+  const s = $('up-s-promo'); if(s){ s.textContent = '✓ 업로드됨'; s.className = 'ucst st-u'; }
+  mu();
+  localStorage.setItem('gwellImagesTs', Date.now().toString());
+}
+function remPromo(){
+  if(!confirm('프로모션 이미지를 삭제하시겠습니까?')) return;
+  promoImageData = null;
+  idbDel('promo-image');
+  const p = $('up-p-promo'); if(p) p.style.backgroundImage = '';
+  const z = $('up-z-promo'); if(z) z.classList.remove('has');
+  const ic = $('up-i-promo'); const tx = $('up-t-promo');
+  if(ic) ic.style.display = '';
+  if(tx) tx.style.display = '';
+  const s = $('up-s-promo'); if(s){ s.textContent = '기본값'; s.className = 'ucst st-d'; }
+  mu();
+  localStorage.setItem('gwellImagesTs', Date.now().toString());
+}
+
+function collectPromoData(){
+  return {
+    enabled: !!$('promo-enabled')?.checked,
+    startDate: $('promo-start')?.value || '',
+    endDate: $('promo-end')?.value || '',
+    delaySec: parseInt($('promo-delay')?.value || 2) || 2,
+    ctaAction: $('promo-cta-action')?.value || 'tour',
+    ctaUrl: $('promo-cta-url')?.value.trim() || '',
+    // 한국어
+    chip: $('promo-chip-ko')?.value.trim() || '',
+    title: $('promo-title-ko')?.value.trim() || '',
+    desc: $('promo-desc-ko')?.value || '',
+    cta: $('promo-cta-ko')?.value.trim() || '',
+    // 영어
+    chipEn: $('promo-chip-en')?.value.trim() || '',
+    titleEn: $('promo-title-en')?.value.trim() || '',
+    descEn: $('promo-desc-en')?.value || '',
+    ctaEn: $('promo-cta-en')?.value.trim() || ''
+  };
+}
+
+function savePromo(silent){
+  const promo = collectPromoData();
+  // 활성화한 경우 최소 제목과 한국어 본문은 있어야 함
+  if(promo.enabled){
+    let invalid = false;
+    if(!promo.title){
+      if(!silent) showToast('❌ 활성화하려면 한국어 제목을 입력해 주세요','err');
+      invalid = true;
+    }
+    if(promo.ctaAction === 'url' && !promo.ctaUrl){
+      if(!silent) showToast('❌ 외부 URL 동작을 선택했으면 URL을 입력해 주세요','err');
+      invalid = true;
+    }
+    if(promo.ctaUrl && !/^https?:\/\//.test(promo.ctaUrl)){
+      if(!silent) showToast('❌ URL은 http:// 또는 https://로 시작해야 합니다','err');
+      invalid = true;
+    }
+    if(promo.startDate && promo.endDate && promo.startDate > promo.endDate){
+      if(!silent) showToast('❌ 시작일이 종료일보다 늦을 수 없습니다','err');
+      invalid = true;
+    }
+    if(invalid){
+      if(!silent) return;
+      // silent 모드(메인 저장 버튼)일 때는 검증 실패해도 enabled를 false로 만들어 저장은 진행
+      // (이전 버그: 그냥 return해서 프로모션 자체가 저장되지 않았음)
+      promo.enabled = false;
+    }
+  }
+  // gwellSettings.promo에 저장
+  const cur = getSettings();
+  cur.promo = promo;
+  localStorage.setItem('gwellSettings', JSON.stringify(cur));
+  // Firestore 동기화
+  if(window.GwellDB){
+    const forSync = {...cur};
+    delete forSync.adminPw;
+    window.GwellDB.saveSiteSettings(forSync).catch(err => console.warn('프로모션 동기화 실패:', err));
+  }
+  // 다른 탭(메인 페이지)에 즉시 변경 알림
+  localStorage.setItem('gwellSettingsTs', String(Date.now()));
+  if(!silent){
+    if(promo.enabled){
+      showToast('✓ 프로모션 저장 완료 — 메인 페이지를 새로고침(F5)하면 표시됩니다!', 'ok');
+    } else {
+      showToast('✓ 프로모션 저장됨 (비활성 상태)', 'ok');
+    }
+  }
+}
+
+function loadPromo(){
+  const s = getSettings();
+  const promo = s.promo || {};
+  if($('promo-enabled')) $('promo-enabled').checked = !!promo.enabled;
+  if($('promo-start')) $('promo-start').value = promo.startDate || '';
+  if($('promo-end')) $('promo-end').value = promo.endDate || '';
+  if($('promo-delay')) $('promo-delay').value = promo.delaySec || 2;
+  if($('promo-cta-action')) $('promo-cta-action').value = promo.ctaAction || 'tour';
+  if($('promo-cta-url')) $('promo-cta-url').value = promo.ctaUrl || '';
+  if($('promo-chip-ko')) $('promo-chip-ko').value = promo.chip || '';
+  if($('promo-title-ko')) $('promo-title-ko').value = promo.title || '';
+  if($('promo-desc-ko')) $('promo-desc-ko').value = promo.desc || '';
+  if($('promo-cta-ko')) $('promo-cta-ko').value = promo.cta || '';
+  if($('promo-chip-en')) $('promo-chip-en').value = promo.chipEn || '';
+  if($('promo-title-en')) $('promo-title-en').value = promo.titleEn || '';
+  if($('promo-desc-en')) $('promo-desc-en').value = promo.descEn || '';
+  if($('promo-cta-en')) $('promo-cta-en').value = promo.ctaEn || '';
+  updatePromoStatus();
+  updateCtaUrlVisibility();
+  // IDB에서 이미지 로드
+  _idbP.then(db => {
+    try {
+      const req = db.transaction('imgs','readonly').objectStore('imgs').get('promo-image');
+      req.onsuccess = () => {
+        if(req.result){
+          promoImageData = req.result;
+          const p = $('up-p-promo'); if(p){ p.style.backgroundImage = `url(${req.result})`; p.style.backgroundSize='cover'; p.style.backgroundPosition='center'; }
+          const z = $('up-z-promo'); if(z) z.classList.add('has');
+          const ic = $('up-i-promo'); if(ic) ic.style.display = 'none';
+          const tx = $('up-t-promo'); if(tx) tx.style.display = 'none';
+          const sl = $('up-s-promo'); if(sl){ sl.textContent = '✓ 업로드됨'; sl.className = 'ucst st-u'; }
+        }
+      };
+    } catch(e){}
+  }).catch(() => {});
+}
+
+function previewPromo(){
+  // 저장 없이 현재 입력값으로 미리보기 (메인 페이지를 새 탭에서 열기 + 자동 표시)
+  const promo = collectPromoData();
+  if(!promo.title){ showToast('❌ 미리보기를 위해선 한국어 제목이 필요합니다','err'); return; }
+  // 임시 저장
+  const cur = getSettings();
+  const backup = cur.promo;
+  cur.promo = {...promo, enabled: true};
+  localStorage.setItem('gwellSettings', JSON.stringify(cur));
+  // 미리보기 쿠키 초기화
+  localStorage.removeItem('gwellPromoHideToday');
+  localStorage.removeItem('gwellPromoHideForever');
+  showToast('👁 미리보기 창이 열립니다. 닫은 후 원래 설정이 복원됩니다.', 'ok');
+  const win = window.open('gwell-life-gangdong.html', 'promoPreview');
+  // 3초 후 원래 설정 복원
+  setTimeout(() => {
+    const back = getSettings();
+    if(backup) back.promo = backup;
+    else delete back.promo;
+    localStorage.setItem('gwellSettings', JSON.stringify(back));
+  }, 3000);
+}
+
+function resetPromoCookies(){
+  localStorage.removeItem('gwellPromoHideToday');
+  localStorage.removeItem('gwellPromoHideForever');
+  showToast('🔄 이 브라우저의 차단 쿠키가 초기화되었습니다', 'ok');
+}
+
+function testPromoNow(){
+  // 1) 활성화 강제로 켜기
+  const wasEnabled = $('promo-enabled')?.checked;
+  if(!wasEnabled){
+    if(!confirm('"활성화" 체크박스가 꺼져 있습니다. 테스트를 위해 자동으로 활성화한 뒤 저장할까요?\n\n(이후 어드민에서 다시 비활성으로 바꿔도 됩니다)')) return;
+    if($('promo-enabled')) $('promo-enabled').checked = true;
+    updatePromoStatus();
+  }
+  // 2) 제목 비어있으면 경고
+  if(!$('promo-title-ko')?.value.trim()){
+    showToast('❌ 한국어 제목을 먼저 입력해 주세요', 'err');
+    $('promo-title-ko')?.focus();
+    if(!wasEnabled && $('promo-enabled')) $('promo-enabled').checked = false;
+    return;
+  }
+  // 3) 저장
+  savePromo(true); // silent
+  // 4) 차단 쿠키 초기화
+  localStorage.removeItem('gwellPromoHideToday');
+  localStorage.removeItem('gwellPromoHideForever');
+  // 5) 메인 페이지를 #testpromo 모드로 새 탭에서 열기 (모든 검사 우회)
+  window.open('gwell-life-gangdong.html#testpromo', '_blank');
+  showToast('🚀 새 탭에서 강제 표시 모드로 메인 페이지가 열립니다!', 'ok');
+}
+
+function diagnosePromo(){
+  const s = getSettings();
+  const promo = s.promo;
+  const today = new Date().toISOString().slice(0,10);
+  const hideToday = localStorage.getItem('gwellPromoHideToday');
+  const hideForever = localStorage.getItem('gwellPromoHideForever');
+  const lines = [];
+  lines.push('━━━━━━━━━━ 프로모션 팝업 진단 ━━━━━━━━━━');
+  if(!promo){
+    lines.push('❌ 저장된 설정이 없습니다.');
+    lines.push('   → 위에서 입력 후 "💾 프로모션 저장"을 눌러주세요.');
+  } else {
+    lines.push(promo.enabled ? '✓ 활성화: ON' : '❌ 활성화: OFF');
+    lines.push('· 한국어 제목: ' + (promo.title ? '"' + promo.title + '"' : '⚠️ 비어있음'));
+    lines.push('· 시작일: ' + (promo.startDate || '제한 없음'));
+    lines.push('· 종료일: ' + (promo.endDate || '제한 없음'));
+    if(promo.startDate && new Date() < new Date(promo.startDate + 'T00:00:00')){
+      lines.push('  ⚠️ 시작일이 미래입니다! 그때까지는 표시되지 않습니다.');
+    }
+    if(promo.endDate && new Date() > new Date(promo.endDate + 'T23:59:59')){
+      lines.push('  ⚠️ 종료일이 지났습니다! 더 이상 표시되지 않습니다.');
+    }
+    lines.push('· 지연시간: ' + (promo.delaySec || 2) + '초');
+    lines.push('· CTA 동작: ' + (promo.ctaAction || 'tour'));
+  }
+  lines.push('');
+  lines.push('━━ 이 브라우저의 차단 쿠키 ━━');
+  if(hideToday === today){
+    lines.push('⚠️ "오늘 하루 보지 않기"가 적용 중! 이게 원인일 수 있습니다.');
+    lines.push('   → "🔄 차단 쿠키 초기화" 버튼을 누르세요.');
+  } else if(hideToday){
+    lines.push('· 이전 날짜의 "오늘 하루 보지 않기" 흔적 (' + hideToday + ') — 오늘은 영향 없음');
+  } else {
+    lines.push('✓ "오늘 하루 보지 않기" 없음');
+  }
+  if(hideForever === '1'){
+    lines.push('⚠️ "다시 보지 않기"가 적용 중! 이게 원인일 수 있습니다.');
+    lines.push('   → "🔄 차단 쿠키 초기화" 버튼을 누르세요.');
+  } else {
+    lines.push('✓ "다시 보지 않기" 없음');
+  }
+  lines.push('');
+  lines.push('💡 메인 페이지를 새 탭에서 열고 F12 키로 콘솔을 보면 자세한 진단이 출력됩니다.');
+  lines.push('💡 메인 페이지 URL 뒤에 #testpromo 를 붙이면 모든 검사를 우회하고 강제 표시됩니다.');
+  alert(lines.join('\n'));
+}
+
+/* ══════════════════════════════════════════
+   COLOR SETTINGS
+═══════════════════════════════════════════ */
+const PRESETS = [
+  {color:'#1B2B4A', name:'브랜드 네이비'},
+  {color:'#FF6905', name:'오렌지'},
+  {color:'#22C55E', name:'그린'},
+  {color:'#3B82F6', name:'블루'},
+  {color:'#8B5CF6', name:'퍼플'},
+  {color:'#EF4444', name:'레드'},
+  {color:'#F59E0B', name:'앰버'},
+  {color:'#0F766E', name:'틸'},
+  {color:'#BE185D', name:'핑크'},
+  {color:'#374151', name:'다크그레이'},
+  {color:'#1D4ED8', name:'딥블루'},
+  {color:'#065F46', name:'딥그린'},
+];
+let currentColor = '#1B2B4A';
+
+function hexToRgb(hex){ return {r:parseInt(hex.slice(1,3),16), g:parseInt(hex.slice(3,5),16), b:parseInt(hex.slice(5,7),16)}; }
+function lighten(hex, a=0.9){ const {r,g,b} = hexToRgb(hex); return `rgb(${Math.round(r+(255-r)*a)},${Math.round(g+(255-g)*a)},${Math.round(b+(255-b)*a)})`; }
+function darken(hex, a=0.2){ const {r,g,b} = hexToRgb(hex); return `rgb(${Math.round(r*(1-a))},${Math.round(g*(1-a))},${Math.round(b*(1-a))})`; }
+
+function initColorPage(){
+  const saved = JSON.parse(localStorage.getItem('gwellColors') || '{}');
+  if(saved.brand) currentColor = saved.brand;
+  $('color-presets').innerHTML = PRESETS.map(p => `<div class="color-swatch${p.color === currentColor ? ' selected' : ''}" style="background:${p.color}" onclick="selectPreset('${p.color}')" title="${p.name}"></div>`).join('');
+  $('color-picker').value = currentColor;
+  $('color-hex').textContent = currentColor;
+  $('color-hex-input').value = currentColor;
+  updateColorPreview(currentColor);
+}
+function selectPreset(color){
+  currentColor = color;
+  $('color-picker').value = color;
+  $('color-hex').textContent = color;
+  $('color-hex-input').value = color;
+  document.querySelectorAll('.color-swatch').forEach((s,i) => s.classList.toggle('selected', PRESETS[i]?.color === color));
+  updateColorPreview(color);
+}
+function updateColorPreview(color){
+  if(!/^#[0-9A-Fa-f]{6}$/.test(color)) return;
+  currentColor = color;
+  $('color-hex').textContent = color;
+  $('color-hex-input').value = color;
+  const light = lighten(color), dark = darken(color);
+  $('pv-btn-main').style.background = color;
+  $('pv-chip').style.background = light; $('pv-chip').style.color = color;
+  $('pv-link').style.color = color;
+  $('color-apply-btn').style.background = color;
+  $('color-name-list').innerHTML = `
+    <div class="cn-item"><div class="cn-dot" style="background:${color}"></div><span>기본 포인트 색상 ${color}</span></div>
+    <div class="cn-item"><div class="cn-dot" style="background:${dark}"></div><span>호버/다크 변형</span></div>
+    <div class="cn-item"><div class="cn-dot" style="background:${light}"></div><span>라이트 배경 변형</span></div>`;
+  document.querySelectorAll('.color-swatch').forEach((s,i) => s.classList.toggle('selected', PRESETS[i]?.color === color));
+}
+function onHexInput(val){
+  const clean = val.startsWith('#') ? val : '#' + val;
+  if(/^#[0-9A-Fa-f]{6}$/.test(clean)){ $('color-picker').value = clean; updateColorPreview(clean); }
+}
+function applyColor(){
+  if(!/^#[0-9A-Fa-f]{6}$/i.test(currentColor)){ showToast('❌ 올바른 HEX 코드를 입력해 주세요','err'); return; }
+  // 어드민 자체에도 즉시 적용
+  document.documentElement.style.setProperty('--brand', currentColor);
+  document.documentElement.style.setProperty('--brand-hover', darken(currentColor));
+  document.documentElement.style.setProperty('--brand-light', lighten(currentColor));
+  localStorage.setItem('gwellColors', JSON.stringify({brand: currentColor}));
+  showToast(`✓ 색상 ${currentColor} 저장 완료! 사이트에 즉시 반영됩니다`, 'ok');
+  // Firestore 동기화
+  if(window.GwellDB) window.GwellDB.saveColors({brand: currentColor}).catch(err => console.warn('색상 동기화 실패:', err));
+}
+
+/* ══════════════════════════════════════════
+   IndexedDB (이미지 저장)
+═══════════════════════════════════════════ */
+const _idbP = new Promise((res, rej) => {
+  try {
+    const r = indexedDB.open('GwellImages', 1);
+    r.onupgradeneeded = e => e.target.result.createObjectStore('imgs');
+    r.onsuccess = e => res(e.target.result);
+    r.onerror = rej;
+  } catch(e){ rej(e); }
+});
+function idbPut(k, v){ _idbP.then(db => { try { const tx = db.transaction('imgs','readwrite'); tx.objectStore('imgs').put(v, k); } catch(e){} }); }
+function idbDel(k){ _idbP.then(db => { try { const tx = db.transaction('imgs','readwrite'); tx.objectStore('imgs').delete(k); } catch(e){} }); }
+function idbGetAll(cb){
+  _idbP.then(db => {
+    const r = {};
+    const tx = db.transaction('imgs','readonly');
+    const req = tx.objectStore('imgs').openCursor();
+    req.onsuccess = e => { const cu = e.target.result; if(cu){ r[cu.key] = cu.value; cu.continue(); } };
+    req.onerror = () => cb({});
+    tx.oncomplete = () => cb(r);
+    tx.onerror = () => cb({});
+  }).catch(() => cb({}));
+}
+function idbPutAll(obj){ _idbP.then(db => { const tx = db.transaction('imgs','readwrite'); const st = tx.objectStore('imgs'); Object.entries(obj).forEach(([k,v]) => { if(v) st.put(v,k); }); }); }
+function idbClear(cb){ _idbP.then(db => { const tx = db.transaction('imgs','readwrite'); tx.objectStore('imgs').clear(); tx.oncomplete = () => { if(cb) cb(); }; }).catch(() => { if(cb) cb(); }); }
+
+/* ══════════════════════════════════════════
+   KEYBOARD
+═══════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if((e.metaKey || e.ctrlKey) && e.key === 's'){ e.preventDefault(); saveAll(); }
+  if(e.key === 'Escape'){
+    const dm = $('day-modal');
+    if(dm && dm.classList.contains('open')){ closeDayModal(); }
+  }
+});
+
+/* ══════════════════════════════════════════
+   DATA FILE 로드 (페이지 진입 시)
+═══════════════════════════════════════════ */
+(function loadFromDataFile(){
+  try {
+    if(!window.GWELL_DATA || !window.GWELL_DATA.updatedAt) return;
+    const fileVer = window.GWELL_DATA.updatedAt;
+    const storedVer = localStorage.getItem('gwellDataVersion') || '';
+    if(fileVer <= storedVer) return;
+    const d = window.GWELL_DATA;
+    if(d.colors && Object.keys(d.colors).length) localStorage.setItem('gwellColors', JSON.stringify(d.colors));
+    if(d.settings) localStorage.setItem('gwellSettings', JSON.stringify(d.settings));
+    if(d.applications && d.applications.length){
+      try {
+        const existing = JSON.parse(localStorage.getItem('gwellApplications') || '[]');
+        const ids = new Set(existing.map(a => a.id));
+        const merged = existing.concat(d.applications.filter(a => !ids.has(a.id)));
+        localStorage.setItem('gwellApplications', JSON.stringify(merged));
+      } catch(e){
+        localStorage.setItem('gwellApplications', JSON.stringify(d.applications));
+      }
+    }
+    if(d.content){
+      const cont = d.content;
+      const imgs = {};
+      if(cont.hero?.slides) cont.hero.slides.forEach((s,i) => { if(s) imgs['hero-' + i] = s; });
+      if(cont.amenity) cont.amenity.forEach((a,i) => (a.images || []).forEach((s,j) => { if(s) imgs[`amenity-${i}-${j}`] = s; }));
+      if(cont.rooms) cont.rooms.forEach((r,i) => (r.images || []).forEach((s,j) => { if(s) imgs[`room-${i}-${j}`] = s; }));
+      if(cont.overview?.images) cont.overview.images.forEach((s,j) => { if(s) imgs[`overview-0-${j}`] = s; });
+      idbPutAll(imgs);
+      const settings = {
+        hero:{title: cont.hero?.title, desc: cont.hero?.desc},
+        amenity:(cont.amenity || []).map(a => ({name: a.name, desc: a.desc})),
+        rooms:(cont.rooms || []).map(r => ({popular: r.popular, fullOccupied: r.fullOccupied})),
+        roomsNotice: cont.roomsNotice, location: cont.location,
+        faq: cont.faq, faqEn: cont.faqEn,
+        stats: cont.stats, i18n: cont.i18n
+      };
+      localStorage.setItem('gwellContent', JSON.stringify(settings));
+    }
+    localStorage.setItem('gwellDataVersion', fileVer);
+  } catch(e){ console.warn('데이터 파일 로드 오류:', e); }
+})();
+
+/* localStorage 이미지 → IDB 마이그레이션 (구버전 데이터) */
+(function migrate(){
+  try {
+    const raw = localStorage.getItem('gwellContent'); if(!raw) return;
+    const d = JSON.parse(raw);
+    const hasImgs = (d.hero?.slides?.some(Boolean))
+      || (d.amenity?.some(a => a.images?.some(Boolean) || a.image))
+      || (d.rooms?.some(r => r.images?.some(Boolean) || r.image))
+      || (d.overview?.images?.some(Boolean) || d.overview?.image);
+    if(!hasImgs) return;
+    const imgs = {};
+    if(d.hero?.slides) d.hero.slides.forEach((s,i) => { if(s) imgs['hero-' + i] = s; });
+    if(d.amenity) d.amenity.forEach((a,i) => {
+      const ai = a.images || [a.image].filter(Boolean);
+      ai.forEach((s,j) => { if(s) imgs[`amenity-${i}-${j}`] = s; });
+    });
+    if(d.rooms) d.rooms.forEach((r,i) => {
+      const ri = r.images || [r.image].filter(Boolean);
+      ri.forEach((s,j) => { if(s) imgs[`room-${i}-${j}`] = s; });
+    });
+    if(d.overview){
+      const oi = d.overview.images || [d.overview.image].filter(Boolean);
+      oi.forEach((s,j) => { if(s) imgs[`overview-0-${j}`] = s; });
+    }
+    idbPutAll(imgs);
+    const settings = {
+      hero:{title: d.hero?.title, desc: d.hero?.desc},
+      amenity:(d.amenity || []).map(a => ({name: a.name, desc: a.desc})),
+      rooms:(d.rooms || []).map(r => ({popular: r.popular, fullOccupied: r.fullOccupied})),
+      roomsNotice: d.roomsNotice, location: d.location, faq: d.faq, faqEn: d.faqEn, stats: d.stats, i18n: d.i18n
+    };
+    localStorage.setItem('gwellContent', JSON.stringify(settings));
+  } catch(e){}
+})();
+
+/* ══════════════════════════════════════════
+   데이터 파일 저장 (gwell-data.js 다운로드)
+═══════════════════════════════════════════ */
+function downloadDataFile(){
+  showToast('📦 데이터 파일 생성 중...', '');
+  idbGetAll(function(images){
+    const colors = {}, settings = {}, applications = [], adminSettings = {};
+    try { Object.assign(colors, JSON.parse(localStorage.getItem('gwellColors') || '{}')); } catch(e){}
+    try { Object.assign(settings, JSON.parse(localStorage.getItem('gwellContent') || '{}')); } catch(e){}
+    try { applications.push(...JSON.parse(localStorage.getItem('gwellApplications') || '[]')); } catch(e){}
+    try { Object.assign(adminSettings, JSON.parse(localStorage.getItem('gwellSettings') || '{}')); } catch(e){}
+    const content = {
+      hero:{
+        title: settings.hero?.title || '',
+        desc: settings.hero?.desc || '',
+        slides:[0,1,2,3,4].map(i => images['hero-' + i] || null)
+      },
+      amenity:[0,1,2].map(i => ({
+        name: settings.amenity?.[i]?.name || '',
+        desc: settings.amenity?.[i]?.desc || '',
+        images:[0,1,2].map(j => images[`amenity-${i}-${j}`] || null)
+      })),
+      rooms:[0,1,2].map(i => ({
+        popular: settings.rooms?.[i]?.popular || false,
+        fullOccupied: settings.rooms?.[i]?.fullOccupied || false,
+        images:[0,1,2].map(j => images[`room-${i}-${j}`] || null)
+      })),
+      overview:{ images:[0,1,2].map(j => images[`overview-0-${j}`] || null) },
+      roomsNotice: settings.roomsNotice || '',
+      location: settings.location || {},
+      faq: settings.faq || {},
+      faqEn: settings.faqEn || {},
+      stats: settings.stats || [],
+      i18n: settings.i18n || {}
+    };
+    const ts = new Date().toISOString();
+    const dateStr = new Date().toLocaleString('ko-KR', {year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'});
+    const dataObj = {
+      version:'1.1',
+      updatedAt: ts,
+      colors,
+      settings: adminSettings,
+      content,
+      applications
+    };
+    const js = '// 지웰홈스 라이프 강동 - 데이터 파일\n// 저장일시: ' + dateStr + '\n// HTML 파일들과 같은 폴더에 놓아야 합니다.\nwindow.GWELL_DATA = ' + JSON.stringify(dataObj, null, 2) + ';\n';
+    const blob = new Blob([js], {type:'text/javascript;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'gwell-data.js';
+    a.click();
+    URL.revokeObjectURL(url);
+    localStorage.setItem('gwellDataVersion', ts);
+    showToast('📦 gwell-data.js 다운로드 완료!', 'ok');
+  });
+}
+
+/* ══════════════════════════════════════════
+   ROOM TOGGLE
+═══════════════════════════════════════════ */
+function attachRoomToggles(){
+  [0,1,2].forEach(i => {
+    const popEl = $('popular-' + i);
+    const soEl = $('soldout-' + i);
+    if(popEl){ popEl.onchange = function(){ ROOM_STATE[i].popular = this.checked; mu(); }; }
+    if(soEl){
+      soEl.onchange = function(){
+        ROOM_STATE[i].fullOccupied = this.checked;
+        const note = $('soldout-note-' + i);
+        if(note) note.style.display = this.checked ? 'block' : 'none';
+        mu();
+      };
+    }
+  });
+}
+
+/* ══════════════════════════════════════════
+   초기화
+═══════════════════════════════════════════ */
+function init(){
+  buildEditors();
+  SECTIONS.forEach(id => { const el = $('section-' + id); if(el) spy.observe(el); });
+  // IDB → 화면 복원
+  idbGetAll(function(images){
+    Object.entries(images).forEach(([key, src]) => {
+      if(!src) return;
+      const p = key.split('-');
+      if(p[0] === 'hero'){ const i = +p[1]; if(i < 5){ IMG.hero[i] = src; setPv('hero', i, src); } }
+      else if(p[0] === 'amenity'){ const i = +p[1], j = +p[2]; if(IMG.amenity[i]) IMG.amenity[i][j] = src; setPvM('amenity', i, j, src); }
+      else if(p[0] === 'room'){ const i = +p[1], j = +p[2]; if(IMG.room[i]) IMG.room[i][j] = src; setPvM('room', i, j, src); }
+      else if(p[0] === 'overview'){ const j = +p[2]; IMG.overview[j] = src; setPvM('overview', 0, j, src); }
+    });
+    loadSaved();
+    attachRoomToggles();
+    loadPromo();    // 프로모션 팝업 설정 로드
+  });
+  // 색상 적용
+  try { const c = JSON.parse(localStorage.getItem('gwellColors') || '{}'); if(c.brand){ document.documentElement.style.setProperty('--brand', c.brand); document.documentElement.style.setProperty('--brand-hover', darken(c.brand)); document.documentElement.style.setProperty('--brand-light', lighten(c.brand)); currentColor = c.brand; } } catch(e){}
+  // 새 신청 카운트
+  (function(){ const n = getApps().filter(a => a.status === '신청확인').length; $('new-count').textContent = n; $('new-count').style.display = n > 0 ? '' : 'none'; })();
+  // 알림 설정 폼 사전 채움 (탭 전환 안 해도 데이터 보장)
+  loadSettingsForm();
+  // Firestore 실시간 구독 시작
+  if(window.GwellDB){
+    // 신청 목록 실시간 구독
+    window.GwellDB.subscribeApplications(apps => {
+      const wasEmpty = _CACHED_APPS.length === 0;
+      _CACHED_APPS = apps;
+      renderStats();
+      renderAllLists();
+      renderCalendar();
+      if(!wasEmpty && apps.length > _CACHED_APPS.length){
+        showToast('🔔 새로운 신청이 들어왔습니다!', 'ok');
+      }
+    });
+    // 방문자수 로드 (10초마다 갱신)
+    const reloadVisits = () => {
+      window.GwellDB.getVisits().then(v => { _CACHED_VISITS = v; renderStats(); }).catch(()=>{});
+    };
+    reloadVisits();
+    setInterval(reloadVisits, 10000);
+    // Firestore에서 콘텐츠/색상/설정 초기 로드
+    window.GwellDB.loadContent().then(d => {
+      if(d){ localStorage.setItem('gwellContent', JSON.stringify(d)); loadSaved(); }
+    }).catch(()=>{});
+    window.GwellDB.loadColors().then(c => {
+      if(c && c.brand){
+        localStorage.setItem('gwellColors', JSON.stringify(c));
+        document.documentElement.style.setProperty('--brand', c.brand);
+        document.documentElement.style.setProperty('--brand-hover', darken(c.brand));
+        document.documentElement.style.setProperty('--brand-light', lighten(c.brand));
+        currentColor = c.brand;
+      }
+    }).catch(()=>{});
+    window.GwellDB.loadSiteSettings().then(s => {
+      if(s){ localStorage.setItem('gwellSettings', JSON.stringify(s)); loadSettingsForm(); loadPromo(); }
+    }).catch(()=>{});
+  }
+}
+
+/* Firebase Auth 기반 자동 로그인 */
+function setupFirebaseAuth(){
+  if(!window.GwellDB){ setTimeout(setupFirebaseAuth, 200); return; }
+  window.GwellDB.onAuthChange(user => {
+    if(user){
+      // 인증됨 → admin UI 표시
+      sessionStorage.setItem('gwellAuth', '1');
+      showAdmin();
+    } else {
+      // 비인증 → 로그인 화면
+      $('loginGate').style.display = '';
+      if($('topbar')) $('topbar').style.display = 'none';
+      if($('mainTabs')) $('mainTabs').style.display = 'none';
+      if($('adminPage')) $('adminPage').style.display = 'none';
+      setTimeout(() => $('loginPw')?.focus(), 100);
+    }
+  });
+}
+window.addEventListener('gwell-firebase-ready', setupFirebaseAuth);
+setupFirebaseAuth();
+</script>
+
+</body>
+</html>

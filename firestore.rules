@@ -1,0 +1,34 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 신청: 누구나 작성, 조회/수정/삭제는 관리자만
+    match /applications/{appId} {
+      allow create: if
+        request.resource.data.type in ['contract', 'tour'] &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.name.size() < 100 &&
+        request.resource.data.phone is string &&
+        request.resource.data.phone.size() < 50 &&
+        request.resource.data.status == '신청확인';
+      allow read, update, delete: if request.auth != null;
+    }
+
+    // 방문자수: 누구나 읽기/쓰기 (dedup은 클라이언트 트랜잭션)
+    match /visits/{day} {
+      allow read: if true;
+      allow write: if
+        request.resource.data.date is string &&
+        request.resource.data.count is number &&
+        request.resource.data.count < 1000000;
+    }
+
+    // 설정 (콘텐츠, 색상, 사이트설정): 누구나 읽기, 관리자만 쓰기
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
