@@ -1249,31 +1249,68 @@ const slides = document.querySelectorAll('.hero-slide');
 const dots = document.querySelectorAll('.hero-dot');
 let heroActiveSlides = [0,1,2,3,4];
 let heroTimer = null;
+
 function goSlide(n){
-  // 이전 슬라이드의 비디오 정지
+  // 이전 슬라이드 비활성화 + 영상 정지
   if(slides[cur]){
     slides[cur].classList.remove('active');
     const oldVid = slides[cur].querySelector('video');
-    if(oldVid) oldVid.pause();
+    if(oldVid){ oldVid.pause(); oldVid.removeEventListener('ended', onVideoEnded); }
   }
   if(dots[cur]) dots[cur].classList.remove('active');
   cur = n;
-  // 새 슬라이드 활성화 + 비디오 재생
-  if(slides[cur]){
-    slides[cur].classList.add('active');
-    const newVid = slides[cur].querySelector('video');
-    if(newVid){ try{ newVid.currentTime = 0; newVid.play(); }catch(e){} }
-  }
+  // 새 슬라이드 활성화
+  if(slides[cur]) slides[cur].classList.add('active');
   if(dots[cur]) dots[cur].classList.add('active');
+  // 다음 전환 스케줄링
+  scheduleNext();
 }
+
+// 영상 끝나면 다음 슬라이드로
+function onVideoEnded(){ heroNext(); }
+
+// 슬라이드 유형에 따라 타이머 설정
+function scheduleNext(){
+  stopHeroTimer();
+  if(heroActiveSlides.length <= 1) return;
+  const slide = slides[cur];
+  if(!slide) return;
+  const vid = slide.querySelector('video');
+  if(vid && vid.src){
+    // 영상 슬라이드: 영상 끝까지 재생 후 넘기기
+    try { vid.currentTime = 0; vid.play(); } catch(e){}
+    vid.loop = false; // 한 번만 재생
+    vid.addEventListener('ended', onVideoEnded, {once: true});
+  } else {
+    // 이미지 슬라이드: 2초 후 넘기기
+    heroTimer = setTimeout(heroNext, 2000);
+  }
+}
+
 function heroNext(){
   const idx = heroActiveSlides.indexOf(cur);
   goSlide(heroActiveSlides[(idx + 1) % heroActiveSlides.length]);
 }
-function startHeroTimer(){ stopHeroTimer(); heroTimer = setInterval(heroNext, 5000); }
-function stopHeroTimer(){ if(heroTimer) clearInterval(heroTimer); heroTimer = null; }
+function startHeroTimer(){ scheduleNext(); }
+function stopHeroTimer(){
+  if(heroTimer){ clearTimeout(heroTimer); heroTimer = null; }
+  // 현재 영상의 ended 리스너도 제거
+  if(slides[cur]){
+    const vid = slides[cur].querySelector('video');
+    if(vid) vid.removeEventListener('ended', onVideoEnded);
+  }
+}
 startHeroTimer();
-document.addEventListener('visibilitychange', ()=>{ document.hidden ? stopHeroTimer() : startHeroTimer(); });
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){
+    stopHeroTimer();
+    // 탭 비활성 시 영상 정지
+    const vid = slides[cur]?.querySelector('video');
+    if(vid) vid.pause();
+  } else {
+    scheduleNext();
+  }
+});
 
 /* ══════════════════════════════════════════
    NAV / MOBILE MENU / SCROLL
@@ -1987,7 +2024,6 @@ function applyImage(el, src){
   el.style.backgroundImage = `url(${src})`;
   el.style.backgroundSize = 'cover';
   el.style.backgroundPosition = 'center';
-  // 기존 비디오가 있으면 제거
   const oldVid = el.querySelector('video');
   if(oldVid) oldVid.remove();
   [...el.childNodes].forEach(n=>{ if(n.nodeType===3) n.textContent=''; });
@@ -1997,23 +2033,25 @@ function applyImage(el, src){
 function applyVideo(el, src){
   if(!el || !src) return;
   el.style.backgroundImage = '';
-  // 기존 비디오 제거
   const old = el.querySelector('video');
   if(old) old.remove();
   const v = document.createElement('video');
   v.src = src;
-  v.autoplay = true;
+  v.autoplay = false; // scheduleNext()가 재생 제어
   v.muted = true;
-  v.loop = true;
+  v.loop = false; // ended 이벤트로 다음 슬라이드 전환
   v.playsInline = true;
   v.setAttribute('playsinline','');
   v.setAttribute('webkit-playsinline','');
   v.preload = 'auto';
-  // 활성 슬라이드가 아니면 일시정지
-  if(!el.classList.contains('active')) v.pause();
   el.insertBefore(v, el.firstChild);
   [...el.childNodes].forEach(n=>{ if(n.nodeType===3) n.textContent=''; });
   el.querySelectorAll('.overview-visual-inner,.floor-tag,.ov-icon,.ov-label').forEach(h=>{ h.style.display='none'; });
+  // 이미 활성 슬라이드라면 즉시 재생 + 타이머 재설정
+  if(el.classList.contains('active')){
+    try { v.play(); } catch(e){}
+    scheduleNext();
+  }
 }
 
 /* ══════════════════════════════════════════
