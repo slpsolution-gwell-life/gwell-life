@@ -173,6 +173,7 @@ nav.scrolled{box-shadow:var(--shadow-md);}
 .hero-slides-wrap{position:relative;flex:1;background:var(--navy);overflow:hidden;min-height:calc(100vh - var(--nav-h) - 88px);}
 .hero-slide{position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease;}
 .hero-slide.active{opacity:1;}
+.hero-slide video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 .hero-slide:nth-child(1){background:linear-gradient(135deg,#1A2E45 0%,#2C4A6E 50%,#1A3A30 100%);}
 .hero-slide:nth-child(2){background:linear-gradient(135deg,#2A3520 0%,#3D5A30 60%,#1A2A1A 100%);}
 .hero-slide:nth-child(3){background:linear-gradient(135deg,#2A1A10 0%,#5A3020 60%,#3A2A15 100%);}
@@ -1249,10 +1250,20 @@ const dots = document.querySelectorAll('.hero-dot');
 let heroActiveSlides = [0,1,2,3,4];
 let heroTimer = null;
 function goSlide(n){
-  if(slides[cur]) slides[cur].classList.remove('active');
+  // 이전 슬라이드의 비디오 정지
+  if(slides[cur]){
+    slides[cur].classList.remove('active');
+    const oldVid = slides[cur].querySelector('video');
+    if(oldVid) oldVid.pause();
+  }
   if(dots[cur]) dots[cur].classList.remove('active');
   cur = n;
-  if(slides[cur]) slides[cur].classList.add('active');
+  // 새 슬라이드 활성화 + 비디오 재생
+  if(slides[cur]){
+    slides[cur].classList.add('active');
+    const newVid = slides[cur].querySelector('video');
+    if(newVid){ try{ newVid.currentTime = 0; newVid.play(); }catch(e){} }
+  }
   if(dots[cur]) dots[cur].classList.add('active');
 }
 function heroNext(){
@@ -1968,9 +1979,39 @@ function initMiniSlideshow(elemId, images){
 ═══════════════════════════════════════════ */
 function applyImage(el, src){
   if(!el || !src) return;
+  // 영상인 경우 <video> 태그 삽입
+  if(src.startsWith('data:video/') || src.endsWith('.mp4') || src.endsWith('.webm')){
+    applyVideo(el, src);
+    return;
+  }
   el.style.backgroundImage = `url(${src})`;
   el.style.backgroundSize = 'cover';
   el.style.backgroundPosition = 'center';
+  // 기존 비디오가 있으면 제거
+  const oldVid = el.querySelector('video');
+  if(oldVid) oldVid.remove();
+  [...el.childNodes].forEach(n=>{ if(n.nodeType===3) n.textContent=''; });
+  el.querySelectorAll('.overview-visual-inner,.floor-tag,.ov-icon,.ov-label').forEach(h=>{ h.style.display='none'; });
+}
+
+function applyVideo(el, src){
+  if(!el || !src) return;
+  el.style.backgroundImage = '';
+  // 기존 비디오 제거
+  const old = el.querySelector('video');
+  if(old) old.remove();
+  const v = document.createElement('video');
+  v.src = src;
+  v.autoplay = true;
+  v.muted = true;
+  v.loop = true;
+  v.playsInline = true;
+  v.setAttribute('playsinline','');
+  v.setAttribute('webkit-playsinline','');
+  v.preload = 'auto';
+  // 활성 슬라이드가 아니면 일시정지
+  if(!el.classList.contains('active')) v.pause();
+  el.insertBefore(v, el.firstChild);
   [...el.childNodes].forEach(n=>{ if(n.nodeType===3) n.textContent=''; });
   el.querySelectorAll('.overview-visual-inner,.floor-tag,.ov-icon,.ov-label').forEach(h=>{ h.style.display='none'; });
 }
