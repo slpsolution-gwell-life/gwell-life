@@ -380,7 +380,7 @@ input[type=color]::-webkit-color-swatch{border-radius:var(--r-sm);border:none;}
 
       <!-- HERO -->
       <div class="panel" id="section-hero">
-        <div class="ph"><div><div class="ph-title">🎬 히어로 슬라이드</div><div class="ph-desc">메인 배경 이미지 최대 5장 + 헤드라인 · 서브 문구</div></div></div>
+        <div class="ph"><div><div class="ph-title">🎬 히어로 슬라이드</div><div class="ph-desc">메인 배경 이미지(최대 5장) 또는 영상(MP4, 30MB 이하) + 헤드라인 · 서브 문구</div></div></div>
         <div class="pb">
           <div class="sub-title">슬라이드 이미지</div>
           <div class="ugrid" id="hero-upload-grid" style="grid-template-columns:repeat(5,1fr)"></div>
@@ -922,8 +922,9 @@ function switchFaqLang(lang, btn){
 /* ══════════════════════════════════════════
    IMAGE UPLOAD HELPERS
 ═══════════════════════════════════════════ */
-function mkUploadCard(type, idx, label, emoji, hint){
+function mkUploadCard(type, idx, label, emoji, hint, allowVideo){
   const pid=`up-p-${type}-${idx}`, zid=`up-z-${type}-${idx}`, sid=`up-s-${type}-${idx}`, iid=`up-i-${type}-${idx}`, tid=`up-t-${type}-${idx}`, finId=`up-fin-${type}-${idx}`;
+  const acceptAttr = allowVideo ? 'image/*,video/mp4,video/webm,video/quicktime' : 'image/*';
   return `<div class="ucard">
     <div class="uch">${idx>=0?`<div class="ucnum">${idx+1}</div>`:''}<div class="uclbl">${label}</div><div class="ucst st-d" id="${sid}">기본값</div></div>
     <div class="uzone" id="${zid}" onclick="trig('${finId}')" ondrop="drop(event,'${type}',${idx})" ondragover="dov(event,'${zid}')" ondragleave="dl('${zid}')">
@@ -931,7 +932,7 @@ function mkUploadCard(type, idx, label, emoji, hint){
       <div class="uov"><button class="uob uoc" onclick="event.stopPropagation();trig('${finId}')">변경</button><button class="uob uod" onclick="event.stopPropagation();rem('${type}',${idx})">삭제</button></div>
       <div class="uzi" id="${iid}">${emoji}</div><div class="uzt" id="${tid}">클릭 또는 드래그</div><div class="uzh">${hint}</div>
     </div>
-    <input type="file" class="hf" id="${finId}" accept="image/*" onchange="sel(event,'${type}',${idx})">
+    <input type="file" class="hf" id="${finId}" accept="${acceptAttr}" onchange="sel(event,'${type}',${idx})">
   </div>`;
 }
 
@@ -980,7 +981,7 @@ function buildEditors(){
       </div>`).join('');
   }
   // Hero - 5장
-  $('hero-upload-grid').innerHTML = [0,1,2,3,4].map(i => mkUploadCard('hero', i, `슬라이드 ${i+1}`, '🖼️', '1920×1080')).join('');
+  $('hero-upload-grid').innerHTML = [0,1,2,3,4].map(i => mkUploadCard('hero', i, `슬라이드 ${i+1}`, '🎬', '이미지/영상', true)).join('');
 
   // Amenity - 라운지마다 3장 + 한글/영문 텍스트
   const amenityDefs = [
@@ -1087,20 +1088,38 @@ function compress(file, cb){
   r.readAsDataURL(file);
 }
 
-// Hero (단일)
+// Hero (단일 — 이미지 또는 영상)
 function sel(e, type, idx){
   const f = e.target.files[0]; if(!f) return;
-  if(f.size > 20*1024*1024){ showToast('❌ 20MB 초과','err'); return; }
-  compress(f, src => storeHero(idx, src));
-  e.target.value = ''; // 동일 파일 재업로드 위해 초기화
+  if(f.size > 30*1024*1024){ showToast('❌ 30MB 초과','err'); return; }
+  // 영상 파일인 경우 압축 없이 직접 저장
+  if(f.type.startsWith('video/')){
+    const r = new FileReader();
+    r.onload = ev => storeHero(idx, ev.target.result);
+    r.onerror = () => showToast('❌ 파일 읽기 실패','err');
+    r.readAsDataURL(f);
+  } else {
+    compress(f, src => storeHero(idx, src));
+  }
+  e.target.value = '';
 }
 function drop(e, type, idx){
   e.preventDefault();
   $(`up-z-hero-${idx}`)?.classList.remove('drag');
   const f = e.dataTransfer.files[0];
-  if(!f || !f.type.startsWith('image/')){ showToast('❌ 이미지 파일만','err'); return; }
-  if(f.size > 20*1024*1024){ showToast('❌ 20MB 초과','err'); return; }
-  compress(f, src => storeHero(idx, src));
+  if(!f){ return; }
+  const isImg = f.type.startsWith('image/');
+  const isVid = f.type.startsWith('video/');
+  if(!isImg && !isVid){ showToast('❌ 이미지 또는 영상 파일만 업로드 가능합니다','err'); return; }
+  if(f.size > 30*1024*1024){ showToast('❌ 30MB 초과','err'); return; }
+  if(isVid){
+    const r = new FileReader();
+    r.onload = ev => storeHero(idx, ev.target.result);
+    r.onerror = () => showToast('❌ 파일 읽기 실패','err');
+    r.readAsDataURL(f);
+  } else {
+    compress(f, src => storeHero(idx, src));
+  }
 }
 function storeHero(idx, src){
   IMG.hero[idx] = src;
@@ -1114,7 +1133,35 @@ function getIds(type, idx){
 }
 function setPv(type, idx, src){ setPvById(getIds(type, idx), src); }
 function setPvById(ids, src){
-  const p = $(ids.p); if(p){ p.style.backgroundImage = `url(${src})`; p.style.backgroundSize='cover'; p.style.backgroundPosition='center'; }
+  const p = $(ids.p);
+  if(p){
+    // 기존 비디오 미리보기 제거
+    const oldVid = p.querySelector('video');
+    if(oldVid) oldVid.remove();
+    const oldBadge = p.querySelector('.video-badge');
+    if(oldBadge) oldBadge.remove();
+
+    if(src && (src.startsWith('data:video/') || src.endsWith('.mp4') || src.endsWith('.webm'))){
+      // 영상 미리보기
+      p.style.backgroundImage = '';
+      p.style.background = '#1a1a2e';
+      const vid = document.createElement('video');
+      vid.src = src; vid.muted = true; vid.loop = true; vid.playsInline = true;
+      vid.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;';
+      vid.play().catch(()=>{});
+      p.appendChild(vid);
+      // 🎬 뱃지
+      const badge = document.createElement('div');
+      badge.className = 'video-badge';
+      badge.style.cssText = 'position:absolute;top:6px;left:6px;background:rgba(0,0,0,0.7);color:#fff;font-size:10px;padding:2px 8px;border-radius:4px;z-index:5;pointer-events:none;';
+      badge.textContent = '🎬 영상';
+      p.appendChild(badge);
+    } else if(src){
+      p.style.backgroundImage = `url(${src})`;
+      p.style.backgroundSize='cover';
+      p.style.backgroundPosition='center';
+    }
+  }
   const z = $(ids.z); if(z) z.classList.add('has');
   const ic = $(ids.ic); const tx = $(ids.tx);
   if(ic) ic.style.display = 'none';
@@ -2326,3 +2373,4 @@ setupFirebaseAuth();
 
 </body>
 </html>
+
